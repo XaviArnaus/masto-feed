@@ -13,13 +13,11 @@ class PublishTest(RunnerProtocol):
     Runner that publishes a test
     '''
 
-    def __init__(
-        self, config: Config, logger: logging, params: dict = None
-    ) -> None:
+    def __init__(self, config: Config, logger: logging, params: dict = None) -> None:
         self._config = config
         self._logger = logger
         self.load_params(params=params)
-    
+
     def load_params(self, params: dict) -> None:
         named_account = None
         preferred_named_accounts = DEFAULT_NAMED_ACCOUNT

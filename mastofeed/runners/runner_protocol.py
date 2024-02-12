@@ -6,9 +6,7 @@ import logging
 @runtime_checkable
 class RunnerProtocol(Protocol):
 
-    def __init__(
-        self, config: Config, logger: logging, params: dict = None
-    ) -> None:
+    def __init__(self, config: Config, logger: logging, params: dict = None) -> None:
         """Initializing the class"""
 
     def run(self) -> None:

@@ -11,9 +11,7 @@ class QueuePublisher(RunnerProtocol):
     Main Runner of the Echo bot
     '''
 
-    def __init__(
-        self, config: Config, logger: logging, params: dict = None
-    ) -> None:
+    def __init__(self, config: Config, logger: logging, params: dict = None) -> None:
         self._config = config
         self._logger = logger
         self._publisher = Publisher(config=self._config, base_path=ROOT_DIR)

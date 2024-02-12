@@ -214,7 +214,7 @@ class FeedParser(ParserProtocol):
 
         if source not in self._already_seen or self._already_seen[source] is None:
             self._logger.debug("Getting possible stored data for %s", source)
-            site_data = self._feeds_storage.get_hashed(self._sources[source]["url"], None)
+            site_data = self._feeds_storage.get_slugged(self._sources[source]["url"], None)
             self._already_seen[source] = site_data["urls_seen"]\
                 if site_data and "urls_seen" in site_data else []
 
@@ -227,7 +227,7 @@ class FeedParser(ParserProtocol):
             self._already_seen[source].append(new_url)
 
         self._logger.debug(f"Updating seen URLs for {source}")
-        self._feeds_storage.set_hashed(
+        self._feeds_storage.set_slugged(
             self._sources[source]["url"], {"urls_seen": self._already_seen[source]}
         )
         self._feeds_storage.write_file()

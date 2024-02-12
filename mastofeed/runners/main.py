@@ -37,17 +37,14 @@ class Main(RunnerProtocol):
         "publish_only_older_toot": False
     }
 
-    def __init__(
-        self, config: Config, logger: logging, params: dict = None
-    ) -> None:
+    def __init__(self, config: Config, logger: logging, params: dict = None) -> None:
         self._config = config
         self._logger = logger
         self._publisher = Publisher(
             config=self._config,
             base_path=ROOT_DIR,
             only_oldest=self._config.get(
-                "publisher.only_older_toot",
-                self.DEFAULT["publish_only_older_toot"]
+                "publisher.only_older_toot", self.DEFAULT["publish_only_older_toot"]
             )
         )
         self._keywords_filter = KeywordsFilter(config)
@@ -144,7 +141,8 @@ class Main(RunnerProtocol):
         """Get the list of parsers that are active"""
         return {
             name: x["module"]
-                for name, x in self.PARSERS.items() if "active" not in x or x["active"] is True
+            for name,
+            x in self.PARSERS.items() if "active" not in x or x["active"] is True
         }
 
     def prepare_config_for_parsers(self) -> Config:

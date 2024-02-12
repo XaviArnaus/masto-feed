@@ -12,7 +12,6 @@ from unittest import TestCase
 import pytest
 from logging import Logger as BuiltInLogger
 import copy
-from hashlib import sha256
 from string import Template
 
 CONFIG = {
@@ -400,11 +399,7 @@ def test_is_id_already_seen_for_source_match():
     source = CONFIG["feed_parser"]["sites"][0]["name"]
     id = "//domain.com/blog_entry_1.html"
 
-    FEEDS = {
-        sha256(CONFIG["feed_parser"]["sites"][0]["url"].encode()).hexdigest(): {
-            "urls_seen": [id]
-        }
-    }
+    FEEDS = {"https-www-example-cat-rss-my-feed": {"urls_seen": [id]}}
 
     instance = get_instance()
 
@@ -458,11 +453,7 @@ def test_set_ids_as_seen_for_source_adding_some():
     id2 = "//domain.com/blog_entry_2.html"
     id3 = "//domain.com/blog_entry_3.html"
     id4 = "//domain.com/blog_entry_4.html"
-    FEEDS = {
-        sha256(CONFIG["feed_parser"]["sites"][0]["url"].encode()).hexdigest(): {
-            "urls_seen": [id1, id2]
-        }
-    }
+    FEEDS = {"https-www-example-cat-rss-my-feed": {"urls_seen": [id1, id2]}}
 
     instance = get_instance()
 

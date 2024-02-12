@@ -5,8 +5,7 @@ from mastofeed.runners.main import Main
 from mastofeed.runners.runner_protocol import RunnerProtocol
 from mastofeed.lib.publisher import Publisher
 from logging import Logger as BuiltInLogger, getLogger
-from unittest.mock import patch, Mock
-from unittest import TestCase
+from unittest.mock import patch
 import copy
 import pytest
 
@@ -57,8 +56,7 @@ CONFIG = {
     "publisher": {
         "media_storage": "storage/media/",
         # This is the old parameter, set in this Publisher class
-        "only_older_toot": False,
-        # This is the new parameter, set in pyxavi's Publisher class
+        "only_older_toot": False,  # This is the new parameter, set in pyxavi's Publisher class
         "only_oldest_post_every_iteration": False,
         "dry_run": False
     },
@@ -69,6 +67,7 @@ CONFIG = {
 
 # This keeps the state of already seen
 STORAGE = {}
+
 
 @pytest.fixture(autouse=True)
 def setup_function():
@@ -81,8 +80,10 @@ def setup_function():
 
     CONFIG = backup_config
 
+
 def patch_storage_read_file(self):
     self._content = STORAGE
+
 
 @patch.object(Storage, "read_file", new=patch_storage_read_file)
 def get_instance() -> Main:
@@ -90,6 +91,7 @@ def get_instance() -> Main:
     logger = getLogger(name=CONFIG["logger"]["name"])
 
     return Main(config=config, logger=logger)
+
 
 def test_instantiation():
 
@@ -101,6 +103,7 @@ def test_instantiation():
     assert isinstance(instance._logger, BuiltInLogger)
     assert isinstance(instance._publisher, Publisher)
     assert isinstance(instance._queue, Queue)
+
 
 @patch.object(Storage, "read_file", new=patch_storage_read_file)
 def test_instance_() -> Main:

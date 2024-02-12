@@ -11,9 +11,7 @@ import logging
 
 class JanitorTest(RunnerProtocol):
 
-    def __init__(
-        self, config: Config, logger: logging, params: dict = None
-    ) -> None:
+    def __init__(self, config: Config, logger: logging, params: dict = None) -> None:
         self._config = config
         self._logger = logger
 

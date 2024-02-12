@@ -3,8 +3,7 @@ from pyxavi.logger import Logger
 from pyxavi.terminal_color import TerminalColor
 from pyxavi.mastodon_publisher import MastodonPublisher
 from pyxavi.queue_stack import Queue
-from pyxavi.mastodon_helper import MastodonConnectionParams,\
-    StatusPost, StatusPostVisibility, StatusPostContentType
+from pyxavi.mastodon_helper import StatusPost
 import os
 
 
@@ -18,7 +17,8 @@ class Publisher(MastodonPublisher):
     DEFAULT_QUEUE_FILE = "storage/queue.yaml"
 
     def __init__(
-        self, config: Config,
+        self,
+        config: Config,
         named_account: str = "default",
         base_path: str = None,
         only_oldest: bool = False
