@@ -1,0 +1,22 @@
+###########################
+#        MastoFeed        #
+###########################
+
+
+# The Feed Parser, in charge to query the defined feeds and get their posts
+feed_parser:
+  # [String] Where to store the feeds registry
+  storage_file: "storage/feeds.yaml"
+  # [List of Objects]
+  sites:
+    -
+      # [String] Name of this site. Will be used as {origin} in the toot
+      name: "News"
+      # [String] URL of the feed to parse
+      url: "https://www.example.cat/rss/my_feed"
+      # [String] 
+      language_default: "ca_ES"
+      # [String|None]
+      keywords_filter_profile: "talamanca"
+      # [Bool] Shows an initial line wit the name of the site like "{name}:\n"
+      show_name: True

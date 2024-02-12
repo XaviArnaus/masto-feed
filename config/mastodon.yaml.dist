@@ -1,0 +1,82 @@
+###########################
+#        MastoFeed        #
+#-------------------------#
+#         Mastodon        #
+###########################
+
+# Configuration regarding the connection with Mastodon API
+mastodon:
+  # [Object] Mastodon account objects per name.
+  #   The idea is that any Janitor module will refer to the name (key) of the object
+  #   And then the related object will be loaded and used for publishing
+  named_accounts:
+    # [Object] The default Mastodon account object, basically used by all the application
+    default:
+      # [String] This will be the name of the bot
+      app_name: "MastoFeed"
+      # [String] Where to connecto to deliver the statuses
+      api_base_url: "https://mastodon.social"
+      # [String] Type of instance: 
+      #   "mastodon" for Mastodon
+      #   "pleroma" for Pleroma / Akkoma
+      #   "firefish" for Firefish / Calckey
+      instance_type: "mastodon"
+      # Credentials files to be generated
+      credentials:
+        # [String] Generated when creating the app. Contains Client ID and Client Secret
+        client_file: "client.secret"
+        # [String] Generated at first login. Contains the User Secret to be reused in further runs.
+        user_file: "user.secret"
+        # The User credentials. Used only during the first run.
+        # Should be Ok to delete the values once we have the "user.secret" generated
+        user:
+          # [String] email to be used to log in. For instance_type "firefish" it is ignored.
+          email: "bot+feeder@my-fancy.site"
+          # [String] Password to be used to log in. For instance_type "firefish" it is the Bearer token.
+          password: "SuperSecureP4ss"
+      # Configuration regarding the Status Post itself
+      status_params:
+        # [Integer] Status max length
+        max_length: 500
+        # [String] Status Post content type: "text/plain" | "text/markdown" | "text/html" | "text/bbcode"
+        # Only vaild for Pleroma and Akkoma instances. Mastodon instances will ignore it
+        content_type: "text/markdown"
+        # [String] Status Post visibility: "direct" | "private" | "unlisted" | "public"
+        visibility: "public"
+        # [String] Username to mention for "direct" visibility 
+        username_to_dm: "@admin"
+    # [Object] The Mastodon account object used for testing.
+    test:
+      # [String] This will be the name of the bot
+      app_name: "Test"
+      # [String] Where to connecto to deliver the statuses
+      api_base_url: "https://mastodon.social"
+      # [String] Type of instance: 
+      #   "mastodon" for Mastodon
+      #   "pleroma" for Pleroma / Akkoma
+      #   "firefish" for Firefish / Calckey
+      instance_type: "mastodon"
+      # Credentials files to be generated
+      credentials:
+        # [String] Generated when creating the app. Contains Client ID and Client Secret
+        client_file: "client-test.secret"
+        # [String] Generated at first login. Contains the User Secret to be reused in further runs.
+        user_file: "user-test.secret"
+        # The User credentials. Used only during the first run.
+        # Should be Ok to delete the values once we have the "user.secret" generated
+        user:
+          # [String] email to be used to log in. For instance_type "firefish" it is ignored.
+          email: "bot+test@my-fancy.site"
+          # [String] Password to be used to log in. For instance_type "firefish" it is the Bearer token.
+          password: "SuperSecureP4ss"
+      # Configuration regarding the Status Post itself
+      status_post:
+        # [Integer] Status max length
+        max_length: 500
+        # [String] Status Post content type: "text/plain" | "text/markdown" | "text/html" | "text/bbcode"
+        # Only vaild for Pleroma and Akkoma instances. Mastodon instances will ignore it
+        content_type: "text/markdown"
+        # [String] Status Post visibility: "direct" | "private" | "unlisted" | "public"
+        visibility: "direct"
+        # [String] Username to mention for "direct" visibility 
+        username_to_dm: "@admin"

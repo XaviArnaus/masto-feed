@@ -1,0 +1,25 @@
+###########################
+#        MastoFeed        #
+###########################
+
+
+keywords_filter:
+  # [Dict] Profiles that contain the rules for keywords filtering
+  profiles:
+    # Profiles as dict
+    "talamanca": 
+        # All strings must be:
+        #  lowercase
+        #  mapped chars (accents, ç -> c, ñ -> n)
+        #  cleaned chars (-.')
+        keywords:
+          - "talamanca"
+          - "mura"
+          - "rocafort"
+          - "navarcles"
+          - "sant fruitos"
+          - "st fruitos"
+          - "montcau"
+          - "bv1221"
+          - "sant llorenc del munt"
+          - "st llorenc"

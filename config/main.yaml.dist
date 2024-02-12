@@ -1,0 +1,63 @@
+###########################
+#        MastoFeed        #
+###########################
+
+# App Info
+app:
+  name: "MastoFeed"
+
+# Logging config
+logger:
+  # [Integer] Log level: NOTSET=0 | DEBUG=10 | INFO=20 | WARN=30 | ERROR=40 | CRITICAL=50
+  loglevel: 10
+  # [String] Name of the logger
+  name: "masto-feed"
+  # [String] Format of the log
+  format: "[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s"
+  # File related parameters
+  file:
+    # [Bool] Dump the log into a file
+    active: True
+    # [String] Path and filename of the log file
+    filename: "log/masto-feed.log"
+    # [String] The encoding of the log file
+    encoding: "UTF-8"
+    # [Bool] Do we want to rotate the log files? Only will apply if we log to files
+    rotate:
+        active: False
+        # [String] When do we rotate. Accepts "S" | "M" | "H" | "D" | "W0"-"W6" | "midnight"
+        #   See https://docs.python.org/3/library/logging.handlers.html#timedrotatingfilehandler
+        when: "midnight"
+        # [Int] How many rotated old files to keep before it starts to delete the older
+        backup_count: 10
+        # [Bool] Stick to UTC timings when triggering the rotation
+        utc: True
+        # [String] in format "%H:%M:%S". When to trigger THE VERY FIRST rotation.
+        #   Subsequent will attend to when_rotate
+        at_time: "1:00:00"
+  # Standard output related parameters
+  stdout:
+  # [Bool] Dump the log into a stdout
+      active: True
+
+# Janitor config
+janitor:
+  # [Bool] Use it. Defaults to false
+  active: False
+  # [String] URL with port where the messages will be delivered
+  remote_url: http://remote_url:5000
+
+# Storage for the toots queue registry
+queue_storage:
+  # [String] Where to store it
+  file: "storage/queue.yaml"
+
+publisher:
+# [String] Where to download the media to
+  media_storage: "storage/media/"
+  # [Bool] Performs a dry run: the queue is untouched and no re-toot is really done
+  # Check the logs/stdout to see the results
+  dry_run: True
+  # [Bool] Publish only the older post
+  # Useful if we have this boot executed often, so publishes a single toot in every run
+  only_older_toot: True

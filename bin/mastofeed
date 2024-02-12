@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+PYTHON=python3
+POETRY_PATH=$(which poetry)
+
+if [ $1 = "help" ]; then
+    # Just redirect the possible command "help" to the already existing -h
+    $POETRY_PATH run main -h
+elif [ $1 = "validate_config" ]; then
+    # Implemented as a side Python script so that does not get into the loading config flow
+    $POETRY_PATH run validate_config
+else
+    # For the rest, just forward to the proper python script
+    $POETRY_PATH run main $@
+fi

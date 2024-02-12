@@ -1,0 +1,72 @@
+[tool.poetry]
+name = "MastoFeed"
+version = "0.0.1"
+description = "Bot that reads RSS feeds and publishes the updates. It is controled by interacting with the Mastodon user directly"
+authors = ["Xavier Arnaus <xavi@arnaus.net>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+"Mastodon.py" = "1.8.0"
+feedparser = "^6.0.10"
+beautifulsoup4 = "^4.12.2"
+pytz = "2023.3.post1"
+StrEnum = "^0.4.15"
+pyxavi = { git = "https://github.com/XaviArnaus/pyxavi.git", branch = "feature/make-config-suporting-no-file" }
+
+[tool.poetry.scripts]
+main = "runner:run"
+validate_config = "scripts.validate_config:run"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0"
+yapf = "^0.32.0"
+toml = "^0.10.2"
+flake8 = "^4.0.1"
+pytest-cov = "^3.0.0"
+
+[tool.isort]
+profile = "hug"
+line_length = 96
+force_grid_wrap = 3
+
+[tool.pytest.ini_options]
+minversion = "6.2"
+addopts = "-ra -q -vvv --ignore-glob=storage*"
+markers = ["slow"]
+pythonpath = [
+  "."
+]
+
+[tool.yapf]
+column_limit = 96
+dedent_closing_brackets = 1
+align_closing_bracket_with_visual_indent = 1
+allow_split_before_dict_value = 0
+blank_line_before_module_docstring = 1
+each_dict_entry_on_separate_line = 1
+split_all_top_level_comma_separated_values = 1
+split_arguments_when_comma_terminated = 1
+split_before_expression_after_opening_paren = 1
+split_before_first_argument = 1
+split_before_logical_operator = 0
+
+[tool.yapfignore]
+ignore_patterns = [
+    "storage/*"
+]
+
+[tool.coverage.report]
+skip_empty = true
+branch = true
+
+[tool.coverage.run]
+omit = [
+    "*/setup.py",
+    "*/__main__.py",
+    "*/__init__.py",
+    "storage/*"
+]
+
+[build-system]
+requires = ['poetry-core>=1.5.2']
+build-backend = 'poetry.core.masonry.api'
