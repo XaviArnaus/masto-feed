@@ -248,11 +248,14 @@ class MentionParser:
                 return True
 
             case MentionAction.TEST:
+                if self.complements['site_url'] == self.complements['feed_url']:
+                    text = f"The site URL {self.complements['site_url']} appears to be " +\
+                           f"a valid feed itself"
+                else:
+                    text = f"The site URL {self.complements['site_url']} appears to have " +\
+                           f"a valid feed at {self.complements['feed_url']}"
                 self.answer = StatusPost.from_dict({
-                    "status": self._format_answer(
-                        f"The site URL {self.complements['site_url']} appears to have " +\
-                        f"a valid feed at {self.complements['feed_url']}"
-                    ),
+                    "status": self._format_answer(text),
                     "in_reply_to_id": self.mention.status_id,
                     "visibility": self.mention.visibility
                 })
@@ -292,13 +295,17 @@ class MentionParser:
                 if not self.is_url_valid(first_word):
                     self.error = self.ERROR_INVALID_URL
                     return False
-                # Second, needs to be a valid RSS
-                list_of_possible_rss_urls = self.findfeed(first_word)
-                if len(list_of_possible_rss_urls) == 0:
-                    self.error = self.ERROR_INVALID_RSS
-                    return False
-                # We have something. Let's see, we pick the first occurrence.
-                rss_url = list_of_possible_rss_urls[0]
+                # It could be already a RSS URL
+                if self.is_url_a_valid_feed(first_word):
+                    rss_url = first_word
+                else:
+                    # Second, needs to be a valid RSS
+                    list_of_possible_rss_urls = self.findfeed(first_word)
+                    if len(list_of_possible_rss_urls) == 0:
+                        self.error = self.ERROR_INVALID_RSS
+                        return False
+                    # We have something. Let's see, we pick the first occurrence.
+                    rss_url = list_of_possible_rss_urls[0]
                 # There can be an optional second word,
                 #   that will be used as an "alias" or "feed name"
                 alias = None
@@ -312,6 +319,8 @@ class MentionParser:
                     if self._feeds_storage.key_exists(alias):
                         self.error = self.ERROR_ALIAS_ALREADY_EXISTS
                         return False
+                else:
+                    alias = slugify(rss_url)
                 # We could also have received a quoted text,
                 #    which will be used as a feed name
                 # And finally, set all of them as complements
@@ -334,12 +343,16 @@ class MentionParser:
                 if not self.is_url_valid(second_word):
                     self.error = self.ERROR_INVALID_URL
                     return False
-                # ... and contain a RSS
-                list_of_possible_rss_urls = self.findfeed(second_word)
-                if len(list_of_possible_rss_urls) == 0:
-                    self.error = self.ERROR_INVALID_RSS
-                    return False
-                rss_url = list_of_possible_rss_urls[0]
+                # It could be already a RSS URL
+                if self.is_url_a_valid_feed(first_word):
+                    rss_url = first_word
+                else:
+                    # ... and contain a RSS
+                    list_of_possible_rss_urls = self.findfeed(second_word)
+                    if len(list_of_possible_rss_urls) == 0:
+                        self.error = self.ERROR_INVALID_RSS
+                        return False
+                    rss_url = list_of_possible_rss_urls[0]
                 # We could also have received a quoted text,
                 #    which will be used as a feed name
                 # And finally, set all of them as complements
@@ -373,13 +386,17 @@ class MentionParser:
                 if not self.is_url_valid(first_word):
                     self.error = self.ERROR_INVALID_URL
                     return False
-                # Second, needs to be a valid RSS
-                list_of_possible_rss_urls = self.findfeed(first_word)
-                if len(list_of_possible_rss_urls) == 0:
-                    self.error = self.ERROR_INVALID_RSS
-                    return False
-                # We have something. Let's see, we pick the first occurrence.
-                rss_url = list_of_possible_rss_urls[0]
+                # It could be already a RSS URL
+                if self.is_url_a_valid_feed(first_word):
+                    rss_url = first_word
+                else:
+                    # Second, needs to be a valid RSS
+                    list_of_possible_rss_urls = self.findfeed(first_word)
+                    if len(list_of_possible_rss_urls) == 0:
+                        self.error = self.ERROR_INVALID_RSS
+                        return False
+                    # We have something. Let's see, we pick the first occurrence.
+                    rss_url = list_of_possible_rss_urls[0]
                 # And finally, set all of them as complements
                 self.complements = {
                     "site_url": first_word,
@@ -410,6 +427,10 @@ class MentionParser:
         else:
             
             return m.group(1)
+    
+    def is_url_a_valid_feed(self, url) -> bool:
+        f = feedparser.parse(url)
+        return len(f.entries) > 0
 
     def findfeed(self, site):
         """
@@ -459,8 +480,7 @@ class MentionParser:
         for url in list(set(possible_feeds)):
             try_both = [url, base + url]
             for possible_feed_url in try_both:
-                f = feedparser.parse(possible_feed_url)
-                if len(f.entries) > 0:
+                if self.is_url_a_valid_feed(possible_feed_url):
                     if possible_feed_url not in result:
                         result.append(possible_feed_url)
         sorted(result, key=by_priority, reverse=True)
