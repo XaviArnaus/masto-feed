@@ -52,6 +52,7 @@ class MentionParser:
     ERROR_INVALID_ALIAS = "The alias can only be letters, numbers and hypens"
     ERROR_ALIAS_ALREADY_EXISTS = "The alias is already taken"
     ERROR_NOT_FOUND_ALIAS = "I can't find that Alias in my records"
+    ERROR_NOT_ALLOWED = "You're not allowed to Create, Update or Remove entries."
     INFO_ADDED = "Added"
     INFO_UPDATED = "Updated"
     INFO_REMOVED = "Removed"
@@ -86,6 +87,10 @@ class MentionParser:
         self.me = config.get("app.user")
         if self.me is None:
             RuntimeError("Please define app.user in the config")
+        self.admin = config.get("app.admin")
+        self._restrict_writes = config.get("app.restrict_writes", True)
+        if self._restrict_writes and self.admin is None:
+            RuntimeError("Please define app.admin in the config to restrict writes")
 
     def load_mention(self, notification) -> None:
         self._logger.debug("Loading mention")
@@ -105,7 +110,7 @@ class MentionParser:
         content = content.replace(self.me, "")
 
         # Wait, let's try the same without the domain in the user
-        small_me = f"@{self.me.split('@')[1]}"
+        small_me = self.small_user(self.me)
         content = content.replace(small_me, "")
 
         # ... and trim spaces
@@ -159,6 +164,14 @@ class MentionParser:
                 return True
             
             case MentionAction.ADD:
+                if not self.user_can_write():
+                    self.answer = StatusPost.from_dict({
+                        "status": self._format_answer(self.ERROR_NOT_ALLOWED),
+                        "in_reply_to_id": self.mention.status_id,
+                        "visibility": self.mention.visibility
+                    })
+                    return True
+                
                 self._feeds_storage.set_slugged(self.complements["alias"], {
                     "site_url": self.complements["site_url"],
                     "feed_url": self.complements["feed_url"]
@@ -172,6 +185,14 @@ class MentionParser:
                 return True
             
             case MentionAction.UPDATE:
+                if not self.user_can_write():
+                    self.answer = StatusPost.from_dict({
+                        "status": self._format_answer(self.ERROR_NOT_ALLOWED),
+                        "in_reply_to_id": self.mention.status_id,
+                        "visibility": self.mention.visibility
+                    })
+                    return True
+                
                 self._feeds_storage.set_slugged(self.complements["alias"], {
                     "site_url": self.complements["site_url"],
                     "feed_url": self.complements["feed_url"]
@@ -185,6 +206,14 @@ class MentionParser:
                 return True
             
             case MentionAction.REMOVE:
+                if not self.user_can_write():
+                    self.answer = StatusPost.from_dict({
+                        "status": self._format_answer(self.ERROR_NOT_ALLOWED),
+                        "in_reply_to_id": self.mention.status_id,
+                        "visibility": self.mention.visibility
+                    })
+                    return True
+                
                 self._feeds_storage.delete(self.complements["alias"])
                 self._feeds_storage.write_file()
                 self.answer = StatusPost.from_dict({
@@ -230,6 +259,7 @@ class MentionParser:
     def _format_answer(self, text: str) -> str:
 
         return f"@{self.mention.username} {text}"
+
 
     def parse_complements(self, words: list) -> None:
 
@@ -346,6 +376,15 @@ class MentionParser:
     
     def is_alias_valid(self, alias) -> bool:
         return alias == slugify(alias)
+    
+    def small_user(self, username) -> str:
+        return f"@{username.split('@')[1]}"
+    
+    def user_can_write(self) -> str:
+        return self._restrict_writes and (
+            self.mention.username == self.admin or
+            self.mention.username == self.small_user(self.admin)
+        )
 
     def findfeed(self, site):
         """
