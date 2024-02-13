@@ -12,6 +12,7 @@ from string import Template
 import feedparser
 import logging
 import re
+from pyxavi.debugger import dd
 
 
 class FeedParser(ParserProtocol):
@@ -23,7 +24,17 @@ class FeedParser(ParserProtocol):
     MAX_SUMMARY_LENGTH = 300
     DEFAULT_LANGUAGE = "en"
     DEFAULT_STORAGE_FILE = "storage/feeds.yaml"
-    # DEFAULT_QUEUE_FILE = "storage/queue.yaml"
+    
+    FEED_EMULATED_PARAMS = {
+        # [String]
+        "language_default": "en",
+        # [Bool] Overwrite original language with defined default language.
+        "language_overwrite": True,
+        # [Bool] Shows an initial line wit the name of the site like "{name}:\n"
+        "show_name": False,
+        # [Int] Max summary length
+        "max_summary_length": 4500
+    }
 
     # This template only adds origin into the title
     TEMPLATE_TITLE_WITH_ORIGIN = "$origin\t$title"
@@ -38,8 +49,32 @@ class FeedParser(ParserProtocol):
         self._feeds_storage = Storage(
             self._config.get("feed_parser.storage_file", self.DEFAULT_STORAGE_FILE)
         )
-        self._sources = {x["name"]: x for x in self._config.get("feed_parser.sites", [])}
+        # self._sources = {x["name"]: x for x in self._config.get("feed_parser.sites", [])}
+        self._load_sources()
         self._already_seen = {}  # type: dict[str, list]
+    
+    def _load_sources(self) -> None:
+        # This takes the data from the self._feeds_storage,
+        #   that since the listener contains also the sites data,
+        #   and builds the sources emulating the config "feed_parser.sites".
+        #   In a later interation this should be merged into the code,
+        #   discarding the config totally.
+
+        self._sources = {}
+        all_registers = self._feeds_storage.get_all()
+        dd(all_registers)
+        for alias, params in self._feeds_storage.get_all().items():
+            key = alias
+            if "name" in params and params["name"] is not None:
+                key = params["name"]
+            
+            self._sources[key] = {
+                "url": params["feed_url"],
+                "language_default": self.FEED_EMULATED_PARAMS["language_default"],
+                "language_overwrite": self.FEED_EMULATED_PARAMS["language_overwrite"],
+                "show_name": self.FEED_EMULATED_PARAMS["show_name"],
+                "max_summary_length": self.FEED_EMULATED_PARAMS["max_summary_length"],
+            }
 
     def format_post_for_source(self, source: str, post: QueuePost) -> None:
 
@@ -214,9 +249,7 @@ class FeedParser(ParserProtocol):
 
         if source not in self._already_seen or self._already_seen[source] is None:
             self._logger.debug("Getting possible stored data for %s", source)
-            site_data = self._feeds_storage.get_slugged(self._sources[source]["url"], None)
-            self._already_seen[source] = site_data["urls_seen"]\
-                if site_data and "urls_seen" in site_data else []
+            self._already_seen[source] = self._feeds_storage.get(f"{source}.urls_seen", [])
 
         return True if id in self._already_seen[source] else False
 
@@ -227,9 +260,7 @@ class FeedParser(ParserProtocol):
             self._already_seen[source].append(new_url)
 
         self._logger.debug(f"Updating seen URLs for {source}")
-        self._feeds_storage.set_slugged(
-            self._sources[source]["url"], {"urls_seen": self._already_seen[source]}
-        )
+        self._feeds_storage.set(f"{source}.urls_seen", self._already_seen[source])
         self._feeds_storage.write_file()
 
     def post_process_for_source(self, source: str, posts: list[QueuePost]) -> list[QueuePost]:

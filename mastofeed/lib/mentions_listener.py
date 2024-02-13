@@ -14,7 +14,6 @@ from bs4 import BeautifulSoup as bs4
 import requests
 import feedparser
 import re
-from pyxavi.debugger import dd
 
 class MentionsListener(StreamListener):
 

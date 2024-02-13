@@ -12,6 +12,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import pytz
 import logging
+from pyxavi.debugger import dd
 
 from mastofeed.parsers.parser_protocol import ParserProtocol
 from mastofeed.parsers.feed_parser import FeedParser
@@ -122,6 +123,7 @@ class Main(RunnerProtocol):
                 # Trying to isolate the possible issues between parsers,
                 #   we secure the current queue before we move to the next parser.
                 self._queue.deduplicate()
+                dd(self._queue.get_all())
                 self._queue.sort()
                 self._queue.save()
 
