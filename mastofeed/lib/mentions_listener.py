@@ -161,105 +161,104 @@ class MentionParser:
             return True
         
         # So, let's answer according to the action
-        match self.action:
+        elif self.action == MentionAction.HELLO:
 
-            case MentionAction.HELLO:
+            self.answer = StatusPost.from_dict({
+                "status": self._format_answer(self.INFO_HELLO),
+                "in_reply_to_id": self.mention.status_id,
+                "visibility": self.mention.visibility
+            })
+            return True
+            
+        elif self.action == MentionAction.ADD:
+            if not self.user_can_write():
                 self.answer = StatusPost.from_dict({
-                    "status": self._format_answer(self.INFO_HELLO),
+                    "status": self._format_answer(self.ERROR_NOT_ALLOWED),
                     "in_reply_to_id": self.mention.status_id,
                     "visibility": self.mention.visibility
                 })
                 return True
             
-            case MentionAction.ADD:
-                if not self.user_can_write():
-                    self.answer = StatusPost.from_dict({
-                        "status": self._format_answer(self.ERROR_NOT_ALLOWED),
-                        "in_reply_to_id": self.mention.status_id,
-                        "visibility": self.mention.visibility
-                    })
-                    return True
-                
-                self._feeds_storage.set_slugged(self.complements["alias"], {
-                    "site_url": self.complements["site_url"],
-                    "feed_url": self.complements["feed_url"],
-                    "name": self.complements["name"]
-                })
-                self._feeds_storage.write_file()
+            self._feeds_storage.set_slugged(self.complements["alias"], {
+                "site_url": self.complements["site_url"],
+                "feed_url": self.complements["feed_url"],
+                "name": self.complements["name"]
+            })
+            self._feeds_storage.write_file()
+            self.answer = StatusPost.from_dict({
+                "status": self._format_answer(self.INFO_ADDED),
+                "in_reply_to_id": self.mention.status_id,
+                "visibility": self.mention.visibility
+            })
+            return True
+            
+        elif self.action == MentionAction.UPDATE:
+            if not self.user_can_write():
                 self.answer = StatusPost.from_dict({
-                    "status": self._format_answer(self.INFO_ADDED),
+                    "status": self._format_answer(self.ERROR_NOT_ALLOWED),
                     "in_reply_to_id": self.mention.status_id,
                     "visibility": self.mention.visibility
                 })
                 return True
             
-            case MentionAction.UPDATE:
-                if not self.user_can_write():
-                    self.answer = StatusPost.from_dict({
-                        "status": self._format_answer(self.ERROR_NOT_ALLOWED),
-                        "in_reply_to_id": self.mention.status_id,
-                        "visibility": self.mention.visibility
-                    })
-                    return True
-                
-                self._feeds_storage.set_slugged(self.complements["alias"], {
-                    "site_url": self.complements["site_url"],
-                    "feed_url": self.complements["feed_url"],
-                    "name": self.complements["name"]
-                })
-                self._feeds_storage.write_file()
+            self._feeds_storage.set_slugged(self.complements["alias"], {
+                "site_url": self.complements["site_url"],
+                "feed_url": self.complements["feed_url"],
+                "name": self.complements["name"]
+            })
+            self._feeds_storage.write_file()
+            self.answer = StatusPost.from_dict({
+                "status": self._format_answer(self.INFO_UPDATED),
+                "in_reply_to_id": self.mention.status_id,
+                "visibility": self.mention.visibility
+            })
+            return True
+            
+        elif self.action == MentionAction.REMOVE:
+            if not self.user_can_write():
                 self.answer = StatusPost.from_dict({
-                    "status": self._format_answer(self.INFO_UPDATED),
+                    "status": self._format_answer(self.ERROR_NOT_ALLOWED),
                     "in_reply_to_id": self.mention.status_id,
                     "visibility": self.mention.visibility
                 })
                 return True
             
-            case MentionAction.REMOVE:
-                if not self.user_can_write():
-                    self.answer = StatusPost.from_dict({
-                        "status": self._format_answer(self.ERROR_NOT_ALLOWED),
-                        "in_reply_to_id": self.mention.status_id,
-                        "visibility": self.mention.visibility
-                    })
-                    return True
-                
-                self._feeds_storage.delete(self.complements["alias"])
-                self._feeds_storage.write_file()
-                self.answer = StatusPost.from_dict({
-                    "status": self._format_answer(self.INFO_REMOVED),
-                    "in_reply_to_id": self.mention.status_id,
-                    "visibility": self.mention.visibility
-                })
-                return True
+            self._feeds_storage.delete(self.complements["alias"])
+            self._feeds_storage.write_file()
+            self.answer = StatusPost.from_dict({
+                "status": self._format_answer(self.INFO_REMOVED),
+                "in_reply_to_id": self.mention.status_id,
+                "visibility": self.mention.visibility
+            })
+            return True
             
-            case MentionAction.LIST:
-                aliases = self._feeds_storage.get_all()
-                if len(aliases) > 0:
-                    registers = [f"[{alias}] {feed['site_url']}: {feed['site_url']} ({feed['feed_url']})" for alias, feed in aliases.items()]
-                else:
-                    registers = ["No registers yet"]
-                registers = "\n".join(registers)
-                self.answer = StatusPost.from_dict({
-                    "status": self._format_answer(f"{self.INFO_LIST_HEADER}{registers}"),
-                    "in_reply_to_id": self.mention.status_id,
-                    "visibility": self.mention.visibility
-                })
-                return True
+        elif self.action == MentionAction.LIST:
+            aliases = self._feeds_storage.get_all()
+            if len(aliases) > 0:
+                registers = [f"[{alias}] {feed['site_url']}: {feed['site_url']} ({feed['feed_url']})" for alias, feed in aliases.items()]
+            else:
+                registers = ["No registers yet"]
+            registers = "\n".join(registers)
+            self.answer = StatusPost.from_dict({
+                "status": self._format_answer(f"{self.INFO_LIST_HEADER}{registers}"),
+                "in_reply_to_id": self.mention.status_id,
+                "visibility": self.mention.visibility
+            })
+            return True
 
-            case MentionAction.TEST:
-                if self.complements['site_url'] == self.complements['feed_url']:
-                    text = f"The site URL {self.complements['site_url']} appears to be " +\
-                           f"a valid feed itself"
-                else:
-                    text = f"The site URL {self.complements['site_url']} appears to have " +\
-                           f"a valid feed at {self.complements['feed_url']}"
-                self.answer = StatusPost.from_dict({
-                    "status": self._format_answer(text),
-                    "in_reply_to_id": self.mention.status_id,
-                    "visibility": self.mention.visibility
-                })
-                return True
+        elif self.action == MentionAction.TEST:
+            if self.complements['site_url'] == self.complements['feed_url']:
+                text = f"The site URL {self.complements['site_url']} appears to be " +\
+                        f"a valid feed itself"
+            else:
+                text = f"The site URL {self.complements['site_url']} appears to have " +\
+                        f"a valid feed at {self.complements['feed_url']}"
+            self.answer = StatusPost.from_dict({
+                "status": self._format_answer(text),
+                "in_reply_to_id": self.mention.status_id,
+                "visibility": self.mention.visibility
+            })
+            return True
 
 
     def answer_back(self) -> bool:
@@ -283,126 +282,124 @@ class MentionParser:
             return True
 
         # So let's check the given complements as per every action needs.
-        match self.action:
-
-            case MentionAction.HELLO:
-                # It does not need complements.
-                return True
+        elif self.action == MentionAction.HELLO:
+            # It does not need complements.
+            return True
             
-            case MentionAction.ADD:
-                # First word needs to be a valid URL
-                first_word = words.pop(0)
-                if not self.is_url_valid(first_word):
-                    self.error = self.ERROR_INVALID_URL
+        elif self.action == MentionAction.ADD:
+            # First word needs to be a valid URL
+            first_word = words.pop(0)
+            if not self.is_url_valid(first_word):
+                self.error = self.ERROR_INVALID_URL
+                return False
+            # It could be already a RSS URL
+            if self.is_url_a_valid_feed(first_word):
+                rss_url = first_word
+            else:
+                # Second, needs to be a valid RSS
+                list_of_possible_rss_urls = self.findfeed(first_word)
+                if len(list_of_possible_rss_urls) == 0:
+                    self.error = self.ERROR_INVALID_RSS
                     return False
-                # It could be already a RSS URL
-                if self.is_url_a_valid_feed(first_word):
-                    rss_url = first_word
-                else:
-                    # Second, needs to be a valid RSS
-                    list_of_possible_rss_urls = self.findfeed(first_word)
-                    if len(list_of_possible_rss_urls) == 0:
-                        self.error = self.ERROR_INVALID_RSS
-                        return False
-                    # We have something. Let's see, we pick the first occurrence.
-                    rss_url = list_of_possible_rss_urls[0]
-                # There can be an optional second word,
-                #   that will be used as an "alias" or "feed name"
-                alias = None
-                if len(words) > 0:
-                    alias = words.pop(0)
-                    # The alias has to be valid
-                    if not self.is_alias_valid(alias=alias):
-                        self.error = self.ERROR_INVALID_ALIAS
-                        return False
-                    # The alias must not exists already
-                    if self._feeds_storage.key_exists(alias):
-                        self.error = self.ERROR_ALIAS_ALREADY_EXISTS
-                        return False
-                else:
-                    alias = slugify(rss_url)
-                # We could also have received a quoted text,
-                #    which will be used as a feed name
-                # And finally, set all of them as complements
-                self.complements = {
-                    "alias": alias,
-                    "site_url": first_word,
-                    "feed_url": rss_url,
-                    "name": quoted_text
-                }
-                return True
+                # We have something. Let's see, we pick the first occurrence.
+                rss_url = list_of_possible_rss_urls[0]
+            # There can be an optional second word,
+            #   that will be used as an "alias" or "feed name"
+            alias = None
+            if len(words) > 0:
+                alias = words.pop(0)
+                # The alias has to be valid
+                if not self.is_alias_valid(alias=alias):
+                    self.error = self.ERROR_INVALID_ALIAS
+                    return False
+                # The alias must not exists already
+                if self._feeds_storage.key_exists(alias):
+                    self.error = self.ERROR_ALIAS_ALREADY_EXISTS
+                    return False
+            else:
+                alias = slugify(rss_url)
+            # We could also have received a quoted text,
+            #    which will be used as a feed name
+            # And finally, set all of them as complements
+            self.complements = {
+                "alias": alias,
+                "site_url": first_word,
+                "feed_url": rss_url,
+                "name": quoted_text
+            }
+            return True
             
-            case MentionAction.UPDATE:
-                # First word needs to be an alias
-                first_word = words.pop(0)
-                if not self._feeds_storage.key_exists(first_word):
-                    self.error = self.ERROR_NOT_FOUND_ALIAS
+        elif self.action == MentionAction.UPDATE:
+            # First word needs to be an alias
+            first_word = words.pop(0)
+            if not self._feeds_storage.key_exists(first_word):
+                self.error = self.ERROR_NOT_FOUND_ALIAS
+                return False
+            # Second needs to be a valid URL
+            second_word = words.pop(0)
+            if not self.is_url_valid(second_word):
+                self.error = self.ERROR_INVALID_URL
+                return False
+            # It could be already a RSS URL
+            if self.is_url_a_valid_feed(first_word):
+                rss_url = first_word
+            else:
+                # ... and contain a RSS
+                list_of_possible_rss_urls = self.findfeed(second_word)
+                if len(list_of_possible_rss_urls) == 0:
+                    self.error = self.ERROR_INVALID_RSS
                     return False
-                # Second needs to be a valid URL
-                second_word = words.pop(0)
-                if not self.is_url_valid(second_word):
-                    self.error = self.ERROR_INVALID_URL
-                    return False
-                # It could be already a RSS URL
-                if self.is_url_a_valid_feed(first_word):
-                    rss_url = first_word
-                else:
-                    # ... and contain a RSS
-                    list_of_possible_rss_urls = self.findfeed(second_word)
-                    if len(list_of_possible_rss_urls) == 0:
-                        self.error = self.ERROR_INVALID_RSS
-                        return False
-                    rss_url = list_of_possible_rss_urls[0]
-                # We could also have received a quoted text,
-                #    which will be used as a feed name
-                # And finally, set all of them as complements
-                self.complements = {
-                    "alias": first_word,
-                    "site_url": second_word,
-                    "feed_url": rss_url,
-                    "name": quoted_text
-                }
-                return True
+                rss_url = list_of_possible_rss_urls[0]
+            # We could also have received a quoted text,
+            #    which will be used as a feed name
+            # And finally, set all of them as complements
+            self.complements = {
+                "alias": first_word,
+                "site_url": second_word,
+                "feed_url": rss_url,
+                "name": quoted_text
+            }
+            return True
             
-            case MentionAction.REMOVE:
-                # First word needs to be an alias
-                first_word = words.pop(0)
-                if not self._feeds_storage.key_exists(first_word):
-                    self.error = self.ERROR_NOT_FOUND_ALIAS
-                    return False
-                # Set it as complements
-                self.complements = {
-                    "alias": first_word
-                }
-                return True
+        elif self.action == MentionAction.REMOVE:
+            # First word needs to be an alias
+            first_word = words.pop(0)
+            if not self._feeds_storage.key_exists(first_word):
+                self.error = self.ERROR_NOT_FOUND_ALIAS
+                return False
+            # Set it as complements
+            self.complements = {
+                "alias": first_word
+            }
+            return True
             
-            case MentionAction.LIST:
-                # It does not need complements.
-                return True
+        elif self.action == MentionAction.LIST:
+            # It does not need complements.
+            return True
             
-            case MentionAction.TEST:
-                # First word needs to be a valid URL
-                first_word = words.pop(0)
-                if not self.is_url_valid(first_word):
-                    self.error = self.ERROR_INVALID_URL
+        elif self.action == MentionAction.TEST:
+            # First word needs to be a valid URL
+            first_word = words.pop(0)
+            if not self.is_url_valid(first_word):
+                self.error = self.ERROR_INVALID_URL
+                return False
+            # It could be already a RSS URL
+            if self.is_url_a_valid_feed(first_word):
+                rss_url = first_word
+            else:
+                # Second, needs to be a valid RSS
+                list_of_possible_rss_urls = self.findfeed(first_word)
+                if len(list_of_possible_rss_urls) == 0:
+                    self.error = self.ERROR_INVALID_RSS
                     return False
-                # It could be already a RSS URL
-                if self.is_url_a_valid_feed(first_word):
-                    rss_url = first_word
-                else:
-                    # Second, needs to be a valid RSS
-                    list_of_possible_rss_urls = self.findfeed(first_word)
-                    if len(list_of_possible_rss_urls) == 0:
-                        self.error = self.ERROR_INVALID_RSS
-                        return False
-                    # We have something. Let's see, we pick the first occurrence.
-                    rss_url = list_of_possible_rss_urls[0]
-                # And finally, set all of them as complements
-                self.complements = {
-                    "site_url": first_word,
-                    "feed_url": rss_url
-                }
-                return True
+                # We have something. Let's see, we pick the first occurrence.
+                rss_url = list_of_possible_rss_urls[0]
+            # And finally, set all of them as complements
+            self.complements = {
+                "site_url": first_word,
+                "feed_url": rss_url
+            }
+            return True
 
 
     def is_url_valid(self, url) -> bool:

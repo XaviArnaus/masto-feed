@@ -5,7 +5,7 @@ description = "Bot that reads RSS feeds and publishes the updates. It is control
 authors = ["Xavier Arnaus <xavi@arnaus.net>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.9"
 "Mastodon.py" = "1.8.1"
 feedparser = "^6.0.10"
 beautifulsoup4 = "^4.12.2"
