@@ -13,6 +13,7 @@ pytz = "2023.3.post1"
 StrEnum = "^0.4.15"
 pyxavi = { git = "https://github.com/XaviArnaus/pyxavi.git", branch = "feature/make-config-suporting-no-file" }
 python-slugify = "^7.0.0"
+validators = "^0.22.0"
 
 [tool.poetry.scripts]
 main = "runner:run"

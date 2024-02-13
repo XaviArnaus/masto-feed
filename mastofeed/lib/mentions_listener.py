@@ -8,6 +8,7 @@ from pyxavi.debugger import dd
 from mastofeed.lib.publisher import Publisher
 from definitions import ROOT_DIR
 from slugify import slugify
+import validators
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup as bs4
 import requests
@@ -136,8 +137,13 @@ class MentionParser:
         # First of all, do we have any errors?
         if self.error is not None:
             # Let's prepare the answer with the error
+            #   We add the HELLO in case of unknown action only
+            if self.error == self.ERROR_INVALID_ACTION:
+                text = f"{self.error}\n\n{self.INFO_HELLO}"
+            else:
+                text = self.error
             self.answer = StatusPost.from_dict({
-                "status": self._format_answer(f"{self.error}\n\n{self.INFO_HELLO}"),
+                "status": self._format_answer(text),
                 "in_reply_to_id": self.mention.status_id,
                 "visibility": self.mention.visibility
             })
@@ -336,8 +342,7 @@ class MentionParser:
 
 
     def is_url_valid(self, url) -> bool:
-        parsed_url = urlparse(url)
-        return True if parsed_url.scheme and parsed_url.netloc else False
+        return True if validators.url(url) else False
     
     def is_alias_valid(self, alias) -> bool:
         return alias == slugify(alias)
