@@ -205,7 +205,7 @@ class FeedParser(ParserProtocol):
                 )
             )
 
-            self._logger.debug(f"Discarded {discarded_posts} invalid posts from {source}")
+        self._logger.debug(f"Discarded {discarded_posts} invalid posts from {source}")
 
         return list_of_raw_posts
 
