@@ -35,6 +35,8 @@ class MentionsListener(StreamListener):
 
         # Now we parse the notification to get what do we need to do
         mention_parser.parse()
+        dd(mention_parser.action)
+        dd(mention_parser.complements)
 
         # Now we execute the action we parsed
         mention_parser.execute()
@@ -66,7 +68,7 @@ class MentionParser:
 
     mention: Mention = None
     action: MentionAction = None
-    complements: {}
+    complements: dict = {}
     error: str = None
     answer: StatusPost = None
     me: str = None
@@ -97,12 +99,15 @@ class MentionParser:
         if self.mention is None:
             raise RuntimeError("Load the mention successfully before trying to parse it")
         
-        # Before doing anything, remove ourself from the mention
-        content = self.mention.content.replace(self.me, "")
+        # Before anything, remove the HTML stuff
+        content = bs4(self.mention.content, features="html.parser").get_text()
+
+        # First, remove ourself from the mention
+        content = content.replace(self.me, "")
 
         # Wait, let's try the same without the domain in the user
-        small_me = f"@{self.me.split('@')[0]}"
-        content = self.mention.content.replace(small_me, "")
+        small_me = f"@{self.me.split('@')[1]}"
+        content = content.replace(small_me, "")
 
         # ... and trim spaces
         content = content.strip()
@@ -187,7 +192,11 @@ class MentionParser:
             
             case MentionAction.LIST:
                 aliases = self._feeds_storage.get_all()
-                registers = [f"{alias}: {feed['url']}" for alias, feed in aliases.items()]
+                if len(aliases) > 0:
+                    registers = [f"{alias}: {feed['url']}" for alias, feed in aliases.items()]
+                else:
+                    registers = ["No registers yet"]
+                registers = "\n".join(registers)
                 self.answer = StatusPost.from_dict({
                     "status": self._format_answer(f"{self.INFO_LIST_HEADER}{registers}"),
                     "in_reply_to_id": self.mention.status_id,
@@ -221,6 +230,10 @@ class MentionParser:
     def parse_complements(self, words: list) -> None:
 
         self._logger.debug("Parsing complements")
+
+        # If no complements, no parsing
+        if len(words) == 0:
+            return True
 
         # So let's check the given complements as per every action needs.
         match self.action:

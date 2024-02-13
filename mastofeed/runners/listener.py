@@ -45,6 +45,8 @@ class Listener(RunnerProtocol):
                     )
 
             self._logger.exception(e)
+            # Let's try an infinite loop
+            self.run()
 
     
     def _get_default_mastodon_instance(self, named_account = "default"):
