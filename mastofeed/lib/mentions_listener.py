@@ -65,7 +65,7 @@ class MentionParser:
     INFO_LIST_HEADER = "The registered Feeds are:\n\n"
 
     DEFAULT_STORAGE_FILE = "storage/feeds.yaml"
-    REGEXP_TEXT_WITHIN_QUOTES = r'"([A-Za-z0-9_\./\\\'\s\-]*)"'
+    REGEXP_TEXT_WITHIN_QUOTES = r'"([\w+_\./\\\'\s\-]*)"'
 
     mention: Mention = None
     action: MentionAction = None
@@ -418,7 +418,7 @@ class MentionParser:
         )
     
     def get_text_inside_quotes(self, content) -> str:
-        m = re.search(self.REGEXP_TEXT_WITHIN_QUOTES, content)
+        m = re.search(self.REGEXP_TEXT_WITHIN_QUOTES, content, re.UNICODE)
         if m is None:
             return None
         else:
