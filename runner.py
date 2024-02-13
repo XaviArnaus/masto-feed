@@ -30,6 +30,11 @@ IMPLEMENTED_IN_BASH_TOKEN = "#BASH#"
 COMMAND_MAP = {
     "commands": (HELP_TOKEN, "Shows the list of available commands and subcommands"),
     "feed": (SUBCOMMAND_TOKEN, "Performs tasks related to the bot itself"),
+    "streaming": (
+        SUBCOMMAND_TOKEN,
+        "Perform tasks related to the Mastodon Streaming listener," +
+        "that parses the mention notifications that the account receives"
+    ),
     "mastodon": (SUBCOMMAND_TOKEN, "Performs tasks related to the Mastodon-like API"),
     "janitor": (SUBCOMMAND_TOKEN, "Performs tasks related to the Janitor API"),
     "validate_config": (IMPLEMENTED_IN_BASH_TOKEN, "Validates the current configs"),
@@ -38,7 +43,15 @@ COMMAND_MAP = {
 SUBCOMMAND_MAP = {
     "feed": {
         "run": (Main, "Runs the application"),
-        "listener": (Listener, "Runs the streaming listener"),
+        "listener": (Listener, "Runs the streaming listener in foreground"),
+    },
+    "streaming": {
+        "start": (Listener, "Starts the streaming listener serrvice in background."),
+        "status": (
+            IMPLEMENTED_IN_BASH_TOKEN,
+            "Requests the status of the streaming listener. Will print the PID if running"
+        ),
+        "stop": (IMPLEMENTED_IN_BASH_TOKEN, "Stops the streaming listener.")
     },
     "mastodon": {
         "test": (

@@ -5,6 +5,35 @@ POETRY_PATH=$(which poetry)
 if [ $1 = "help" ]; then
     # Just redirect the possible command "help" to the already existing -h
     $POETRY_PATH run main -h
+elif [ $1 = "streaming" ]; then
+    if [ $2 = "start" ]; then
+        # We want to spawn a listener without too much noise, and logging directly.
+        LISTENER=$(pgrep -f "main', 'streaming'");
+        if [ ! -z "$LISTENER" ]
+        then
+            echo "Listener already running with PID: $LISTENER. Skipping."
+        else
+            nohup $POETRY_PATH run main $@ > log/listen_in_background.log 2>&1 &
+            echo "Listener started."
+        fi
+    elif [ $2 = "status" ]; then
+        # Are we already listening?
+        LISTENER=$(pgrep -f "main', 'streaming'");
+        if [ -z "$LISTENER" ]
+        then
+            echo "Listener is NOT running"
+        else
+            echo "Listener is running with the PID: $LISTENER"
+        fi
+    elif [ $2 = "stop" ]; then
+        LISTENER=$(pgrep -f "main', 'streaming'");
+        if [ ! -z "$LISTENER" ]
+        then
+            echo "Stopping listener under PID: $LISTENER"
+            sudo kill -9 $LISTENER
+        fi
+        ./$0 streaming status
+    fi
 elif [ $1 = "validate_config" ]; then
     # Implemented as a side Python script so that does not get into the loading config flow
     $POETRY_PATH run validate_config
