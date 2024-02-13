@@ -375,8 +375,9 @@ class MentionParser:
                     return False
                 # Second, needs to be a valid RSS
                 list_of_possible_rss_urls = self.findfeed(first_word)
-                if list_of_possible_rss_urls == 0:
+                if len(list_of_possible_rss_urls) == 0:
                     self.error = self.ERROR_INVALID_RSS
+                    return False
                 # We have something. Let's see, we pick the first occurrence.
                 rss_url = list_of_possible_rss_urls[0]
                 # And finally, set all of them as complements
