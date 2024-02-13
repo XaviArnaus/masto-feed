@@ -36,8 +36,6 @@ class MentionsListener(StreamListener):
 
         # Now we parse the notification to get what do we need to do
         mention_parser.parse()
-        dd(mention_parser.action)
-        dd(mention_parser.complements)
 
         # Now we execute the action we parsed
         mention_parser.execute()
@@ -49,8 +47,8 @@ class MentionsListener(StreamListener):
 class MentionParser:
 
     ERROR_INVALID_ACTION = "I don't understand the action."
-    ERROR_INVALID_URL = "The given URL does not seem to be valid"
-    ERROR_INVALID_RSS = "I could not get a valid RSS feed from the given URL"
+    ERROR_INVALID_URL = "The given URL does not seem to be valid. Don't forget the schema."
+    ERROR_INVALID_RSS = "I could not get a valid RSS feed from the given URL. Perhaps it is in a /blog subdirectory?"
     ERROR_INVALID_ALIAS = "The alias can only be letters, numbers and hypens"
     ERROR_ALIAS_ALREADY_EXISTS = "The alias is already taken"
     ERROR_NOT_FOUND_ALIAS = "I can't find that Alias in my records"
@@ -58,8 +56,8 @@ class MentionParser:
     INFO_UPDATED = "Updated"
     INFO_REMOVED = "Removed"
     INFO_HELLO = "I am an RSS Feeder bot. You can use the following commands with me:\n\n" +\
-        "add [site-url] [alias] -> Will register a new RSS\n" +\
-        "update [alias] [site-url] -> Will change the URL for an alias\n" +\
+        "add [site-url] [alias] (name) -> Will register a new RSS\n" +\
+        "update [alias] [site-url] (name) -> Will change the URL for an alias\n" +\
         "remove [alias] -> Will remove the record\n" +\
         "test [site-url] -> Will test the URL searching for RSSs\n" +\
         "list -> Will show all the records I have"
@@ -199,7 +197,7 @@ class MentionParser:
             case MentionAction.LIST:
                 aliases = self._feeds_storage.get_all()
                 if len(aliases) > 0:
-                    registers = [f"{alias}: {feed['url']}" for alias, feed in aliases.items()]
+                    registers = [f"{alias}: {feed['site_url']} ({feed['feed_url']})" for alias, feed in aliases.items()]
                 else:
                     registers = ["No registers yet"]
                 registers = "\n".join(registers)
@@ -256,8 +254,9 @@ class MentionParser:
                     return False
                 # Second, needs to be a valid RSS
                 list_of_possible_rss_urls = self.findfeed(first_word)
-                if list_of_possible_rss_urls == 0:
+                if len(list_of_possible_rss_urls) == 0:
                     self.error = self.ERROR_INVALID_RSS
+                    return False
                 # We have something. Let's see, we pick the first occurrence.
                 rss_url = list_of_possible_rss_urls[0]
                 # There can be an optional second word,
@@ -294,8 +293,9 @@ class MentionParser:
                     return False
                 # ... and contain a RSS
                 list_of_possible_rss_urls = self.findfeed(second_word)
-                if list_of_possible_rss_urls == 0:
+                if len(list_of_possible_rss_urls) == 0:
                     self.error = self.ERROR_INVALID_RSS
+                    return False
                 rss_url = list_of_possible_rss_urls[0]
                 # And finally, set all of them as complements
                 self.complements = {
@@ -352,12 +352,27 @@ class MentionParser:
         It returns a list of URLs found in the given site's URL that have entries.
         so be prepared to receive an array.
         """
-        # kindly stolen from
+        def by_priority(element):
+            if "rss" in element:
+                return 1
+            elif "atom" in element:
+                return 3
+            else:
+                return 5
+        # kindly adapted from
         #   https://alexmiller.phd/posts/python-3-feedfinder-rss-detection-from-url/
-        raw = requests.get(site).text
+        # What I added:
+        #   1. Send a HEAD first, so we can follow redirections
+        #   2. Do not search within the body, only the LINK inside the HEAD
+        #   3. Add the base URL in case the RSS link is relative
+        #   4. Sort, I want RSS mainly
+
+        # Get the header first, so we know if there is a redirection
+        r = requests.head(site, allow_redirects=True)
+        raw = requests.get(r.url).text
         result = []
         possible_feeds = []
-        html = bs4(raw)
+        html = bs4(raw, features="html.parser")
         feed_urls = html.findAll("link", rel="alternate")
         if len(feed_urls) > 1:
             for f in feed_urls:
@@ -367,19 +382,24 @@ class MentionParser:
                         href = f.get("href",None)
                         if href:
                             possible_feeds.append(href)
+        # parsed_url = urlparse(site)
+        # base = parsed_url.scheme+"://"+parsed_url.hostname
+        # atags = html.findAll("a")
+        # for a in atags:
+        #     href = a.get("href",None)
+        #     if href:
+        #         if "xml" in href or "rss" in href or "feed" in href:
+        #             possible_feeds.append(base+href)
         parsed_url = urlparse(site)
         base = parsed_url.scheme+"://"+parsed_url.hostname
-        atags = html.findAll("a")
-        for a in atags:
-            href = a.get("href",None)
-            if href:
-                if "xml" in href or "rss" in href or "feed" in href:
-                    possible_feeds.append(base+href)
         for url in list(set(possible_feeds)):
-            f = feedparser.parse(url)
-            if len(f.entries) > 0:
-                if url not in result:
-                    result.append(url)
+            try_both = [url, base + url]
+            for possible_feed_url in try_both:
+                f = feedparser.parse(possible_feed_url)
+                if len(f.entries) > 0:
+                    if possible_feed_url not in result:
+                        result.append(possible_feed_url)
+        sorted(result, key=by_priority, reverse=True)
         return(result)
 
 
