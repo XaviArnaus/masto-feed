@@ -11,7 +11,8 @@ import logging
 
 class Listener(RunnerProtocol):
     '''
-    Main Runner of the Echo bot
+    Starts the Mastodon Streaming listener. It will kidnap the thread, so you better
+    run it as a separated command and leave it running in the background.
     '''
 
     def __init__(self, config: Config, logger: logging, params: dict = None) -> None:

@@ -4,7 +4,10 @@
 
 # App Info
 app:
+  # Application name
   name: "MastoFeed"
+  # User used for publishing (with domain, in a @user@domain.tld pattern)
+  user: "@feeder@social.arnaus.net"
 
 # Logging config
 logger:

@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup as bs4
 import requests
 import feedparser
-
+from pyxavi.debugger import dd
 
 class MentionsListener(StreamListener):
 
@@ -69,6 +69,7 @@ class MentionParser:
     complements: {}
     error: str = None
     answer: StatusPost = None
+    me: str = None
 
     def __init__(self, config: Config) -> None:
 
@@ -81,6 +82,9 @@ class MentionParser:
             config=config,
             base_path=ROOT_DIR
         )
+        self.me = config.get("app.user")
+        if self.me is None:
+            RuntimeError("Please define app.user in the config")
 
     def load_mention(self, notification) -> None:
         self._logger.debug("Loading mention")
@@ -94,7 +98,11 @@ class MentionParser:
             raise RuntimeError("Load the mention successfully before trying to parse it")
         
         # Before doing anything, remove ourself from the mention
-        content = self.mention.content.replace(self.mention.username_to, "")
+        content = self.mention.content.replace(self.me, "")
+
+        # Wait, let's try the same without the domain in the user
+        small_me = f"@{self.me.split('@')[0]}"
+        content = self.mention.content.replace(small_me, "")
 
         # ... and trim spaces
         content = content.strip()
@@ -208,7 +216,7 @@ class MentionParser:
 
     def _format_answer(self, text: str) -> str:
 
-        return f"{self.mention.username_from} {text}"
+        return f"@{self.mention.username} {text}"
 
     def parse_complements(self, words: list) -> None:
 
@@ -357,8 +365,6 @@ class MentionParser:
         return(result)
 
 
-
-
 class MentionAction:
 
     HELLO = "hello"
@@ -397,22 +403,19 @@ class Mention:
 
     status_id: int = None
     content: str = None
-    username_from: str = None
-    username_to: str = None
+    username: str = None
     visibility: StatusPostVisibility = None
 
     def __init__(
         self,
         status_id: int = None,
         content: str = None,
-        username_from: str = None,
-        username_to: str = None,
+        username: str = None,
         visibility: StatusPostVisibility = None
     ) -> None:
         self.status_id = status_id
         self.content = content
-        self.username_from = username_from
-        self.username_to = username_to
+        self.username = username
         self.visibility = visibility if visibility is not None\
             else StatusPostVisibility.PUBLIC
     
@@ -420,8 +423,7 @@ class Mention:
         return {
             "status_id": self.status_id,
             "content": self.content,
-            "username_from": self.username_from,
-            "username_to": self.username_to,
+            "username": self.username,
             "visibility": self.visibility
         }
     
@@ -429,8 +431,7 @@ class Mention:
         return Mention(
             mention["status_id"] if "status_id" in mention else None,
             mention["content"] if "content" in mention else None,
-            mention["username_from"] if "username_from" in mention else None,
-            mention["username_to"] if "username_to" in mention else None,
+            mention["username"] if "username" in mention else None,
             StatusPostVisibility.valid_or_raise(mention["visibility"])
             if "visibility" in mention else None,
         )
@@ -439,7 +440,6 @@ class Mention:
         return Mention.from_dict({
             "status_id": notification.status.id,
             "content": notification.status.content,
-            "username_from": notification.account.acct,
-            "username_to": notification.status.acct,
+            "username": notification.account.acct,
             "visibility": notification.status.visibility
         })
