@@ -6,7 +6,6 @@ from pyxavi.queue_stack import Queue
 from pyxavi.mastodon_helper import StatusPost
 import os
 
-
 class Publisher(MastodonPublisher):
     '''
     Publisher
@@ -51,7 +50,7 @@ class Publisher(MastodonPublisher):
                     posted_media = self.publish_media(media=toot["media"])
 
                 status_post = StatusPost(
-                    status=toot["status"],
+                    status=f"{toot['summary']}\n\n{toot['text']}",
                     language=toot["language"],
                     in_reply_to_id=previous_id if previous_id else None,
                     media_ids=posted_media if posted_media else None,

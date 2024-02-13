@@ -12,7 +12,6 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import pytz
 import logging
-from pyxavi.debugger import dd
 
 from mastofeed.parsers.parser_protocol import ParserProtocol
 from mastofeed.parsers.feed_parser import FeedParser
@@ -125,6 +124,9 @@ class Main(RunnerProtocol):
                 self._queue.deduplicate()
                 self._queue.sort()
                 self._queue.save()
+
+                # Now publish the queue, according to the config preferences.
+                self._publisher.publish_all_from_queue()
 
         except Exception as e:
             if self._config.get("janitor.active", False):

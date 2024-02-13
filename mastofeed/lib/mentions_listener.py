@@ -4,7 +4,6 @@ from pyxavi.config import Config
 from pyxavi.logger import Logger
 from pyxavi.storage import Storage
 from pyxavi.mastodon_helper import StatusPost, StatusPostVisibility
-from pyxavi.debugger import dd
 from mastofeed.lib.publisher import Publisher
 from definitions import ROOT_DIR
 from slugify import slugify
