@@ -62,14 +62,11 @@ class FeedParser(ParserProtocol):
 
         self._sources = {}
         all_registers = self._feeds_storage.get_all()
-        dd(all_registers)
         for alias, params in self._feeds_storage.get_all().items():
-            key = alias
-            if "name" in params and params["name"] is not None:
-                key = params["name"]
             
-            self._sources[key] = {
+            self._sources[alias] = {
                 "url": params["feed_url"],
+                "name": params["name"] if "name" in params and params["name"] is not None else alias,
                 "language_default": self.FEED_EMULATED_PARAMS["language_default"],
                 "language_overwrite": self.FEED_EMULATED_PARAMS["language_overwrite"],
                 "show_name": self.FEED_EMULATED_PARAMS["show_name"],
@@ -104,7 +101,7 @@ class FeedParser(ParserProtocol):
         # Do we need to add the source name into the title?
         if "show_name" in self._sources[source] and self._sources[source]["show_name"]:
             title = Template(self.TEMPLATE_TITLE_WITH_ORIGIN).substitute(
-                origin=source, title=title
+                origin=self._sources[source]["name"], title=title
             )
 
         # Do we need to merge all fields into the body
