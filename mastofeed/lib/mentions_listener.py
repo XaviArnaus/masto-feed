@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup as bs4
 import requests
 import feedparser
+import re
 from pyxavi.debugger import dd
 
 class MentionsListener(StreamListener):
@@ -52,19 +53,20 @@ class MentionParser:
     ERROR_INVALID_ALIAS = "The alias can only be letters, numbers and hypens"
     ERROR_ALIAS_ALREADY_EXISTS = "The alias is already taken"
     ERROR_NOT_FOUND_ALIAS = "I can't find that Alias in my records"
-    ERROR_NOT_ALLOWED = "You're not allowed to Create, Update or Remove entries."
+    ERROR_NOT_ALLOWED = "You're not allowed to Create, Update or Remove records."
     INFO_ADDED = "Added"
     INFO_UPDATED = "Updated"
     INFO_REMOVED = "Removed"
     INFO_HELLO = "I am an RSS Feeder bot. You can use the following commands with me:\n\n" +\
-        "add [site-url] [alias] (name) -> Will register a new RSS\n" +\
-        "update [alias] [site-url] (name) -> Will change the URL for an alias\n" +\
+        "add [site-url] [alias] \"name of the feed\" -> Will register a new RSS\n" +\
+        "update [alias] [site-url] \"name of the feed\" -> Will change the URL for an alias\n" +\
         "remove [alias] -> Will remove the record\n" +\
         "test [site-url] -> Will test the URL searching for RSSs\n" +\
         "list -> Will show all the records I have"
     INFO_LIST_HEADER = "The registered Feeds are:\n\n"
 
     DEFAULT_STORAGE_FILE = "storage/feeds.yaml"
+    REGEXP_TEXT_WITHIN_QUOTES = r'"([A-Za-z0-9_\./\\\'\s\-]*)"'
 
     mention: Mention = None
     action: MentionAction = None
@@ -116,6 +118,13 @@ class MentionParser:
         # ... and trim spaces
         content = content.strip()
 
+        # Before getting the words, get the possible text inside quotes
+        #   we'll use it for ADD and UPDATE to assign a Name
+        quoted_text = self.get_text_inside_quotes(content)
+        if quoted_text is not None:
+            content = content.replace(quoted_text, "")
+            content = content.replace("\"", "")
+
         # We work by words, so split the mentionby spaces:
         words = content.split()
 
@@ -131,7 +140,7 @@ class MentionParser:
         # And then the rest must be any possible complements.
         #   Because the complements needs change per action, this becomes more complex.
         #   The answer of this subcall is the answer of the call
-        return self.parse_complements(words=words)
+        return self.parse_complements(words=words, quoted_text=quoted_text)
     
     def execute(self) -> bool:
 
@@ -174,7 +183,8 @@ class MentionParser:
                 
                 self._feeds_storage.set_slugged(self.complements["alias"], {
                     "site_url": self.complements["site_url"],
-                    "feed_url": self.complements["feed_url"]
+                    "feed_url": self.complements["feed_url"],
+                    "name": self.complements["name"]
                 })
                 self._feeds_storage.write_file()
                 self.answer = StatusPost.from_dict({
@@ -195,7 +205,8 @@ class MentionParser:
                 
                 self._feeds_storage.set_slugged(self.complements["alias"], {
                     "site_url": self.complements["site_url"],
-                    "feed_url": self.complements["feed_url"]
+                    "feed_url": self.complements["feed_url"],
+                    "name": self.complements["name"]
                 })
                 self._feeds_storage.write_file()
                 self.answer = StatusPost.from_dict({
@@ -226,7 +237,7 @@ class MentionParser:
             case MentionAction.LIST:
                 aliases = self._feeds_storage.get_all()
                 if len(aliases) > 0:
-                    registers = [f"{alias}: {feed['site_url']} ({feed['feed_url']})" for alias, feed in aliases.items()]
+                    registers = [f"[{alias}] {feed['site_url']}: {feed['site_url']} ({feed['feed_url']})" for alias, feed in aliases.items()]
                 else:
                     registers = ["No registers yet"]
                 registers = "\n".join(registers)
@@ -261,7 +272,7 @@ class MentionParser:
         return f"@{self.mention.username} {text}"
 
 
-    def parse_complements(self, words: list) -> None:
+    def parse_complements(self, words: list, quoted_text: str = None) -> None:
 
         self._logger.debug("Parsing complements")
 
@@ -302,11 +313,14 @@ class MentionParser:
                     if self._feeds_storage.key_exists(alias):
                         self.error = self.ERROR_ALIAS_ALREADY_EXISTS
                         return False
+                # We could also have received a quoted text,
+                #    which will be used as a feed name
                 # And finally, set all of them as complements
                 self.complements = {
                     "alias": alias,
                     "site_url": first_word,
-                    "feed_url": rss_url
+                    "feed_url": rss_url,
+                    "name": quoted_text
                 }
                 return True
             
@@ -327,11 +341,14 @@ class MentionParser:
                     self.error = self.ERROR_INVALID_RSS
                     return False
                 rss_url = list_of_possible_rss_urls[0]
+                # We could also have received a quoted text,
+                #    which will be used as a feed name
                 # And finally, set all of them as complements
                 self.complements = {
                     "alias": first_word,
                     "site_url": second_word,
-                    "feed_url": rss_url
+                    "feed_url": rss_url,
+                    "name": quoted_text
                 }
                 return True
             
@@ -382,9 +399,17 @@ class MentionParser:
     
     def user_can_write(self) -> str:
         return self._restrict_writes and (
-            self.mention.username == self.admin or
-            self.mention.username == self.small_user(self.admin)
+            self.mention.username == self.admin.lstrip("@") or
+            self.mention.username == self.small_user(self.admin).lstrip("@")
         )
+    
+    def get_text_inside_quotes(self, content) -> str:
+        m = re.search(self.REGEXP_TEXT_WITHIN_QUOTES, content)
+        if m is None:
+            return None
+        else:
+            
+            return m.group(1)
 
     def findfeed(self, site):
         """
