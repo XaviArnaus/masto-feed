@@ -12,6 +12,7 @@ import glob
 import logging
 
 from mastofeed.runners.main import Main
+from mastofeed.runners.listener import Listener
 from mastofeed.runners.publish_queue import QueuePublisher
 from mastofeed.runners.publish_test import PublishTest
 from mastofeed.runners.janitor_test import JanitorTest
@@ -37,6 +38,7 @@ COMMAND_MAP = {
 SUBCOMMAND_MAP = {
     "feed": {
         "run": (Main, "Runs the application"),
+        "listener": (Listener, "Runs the streaming listener"),
     },
     "mastodon": {
         "test": (

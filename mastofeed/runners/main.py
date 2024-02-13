@@ -19,7 +19,7 @@ from mastofeed.parsers.feed_parser import FeedParser
 
 class Main(RunnerProtocol):
     '''
-    Main Runner of the Echo bot
+    Main Runner of the MastoFeed bot
     '''
 
     PARSERS = {
@@ -50,12 +50,12 @@ class Main(RunnerProtocol):
         self._keywords_filter = KeywordsFilter(config)
         self._queue = Queue(
             logger=self._logger,
-            storage_file=config.get("toots_queue_storage.file", self.DEFAULT_QUEUE_FILE)
+            storage_file=config.get("queue_storage.file", self.DEFAULT_QUEUE_FILE)
         )
 
     def run(self) -> None:
 
-        self._logger.info(f"{TerminalColor.MAGENTA}Main EchoBot run{TerminalColor.END}")
+        self._logger.info(f"{TerminalColor.MAGENTA}Main MastoFeed run{TerminalColor.END}")
         try:
 
             # Get the parsers that are active from the defined ones above.
