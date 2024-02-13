@@ -235,7 +235,7 @@ class MentionParser:
         elif self.action == MentionAction.LIST:
             aliases = self._feeds_storage.get_all()
             if len(aliases) > 0:
-                registers = [f"[{alias}] {feed['site_url']}: {feed['site_url']} ({feed['feed_url']})" for alias, feed in aliases.items()]
+                registers = [f"[{alias}] {feed['name']}: {feed['site_url']} ({feed['feed_url']})" for alias, feed in aliases.items()]
             else:
                 registers = ["No registers yet"]
             registers = "\n".join(registers)
