@@ -56,7 +56,8 @@ class Publisher(MastodonPublisher):
                     posted_media = self.publish_media(media=toot["media"])
 
                 status_post = StatusPost(
-                    status=f"{toot['summary']}\n\n{toot['text']}",
+                    spoiler_text=toot['summary'],
+                    status=toot['text'],
                     language=toot["language"],
                     in_reply_to_id=previous_id if previous_id else None,
                     media_ids=posted_media if posted_media else None,
