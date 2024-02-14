@@ -46,7 +46,8 @@ class Main(RunnerProtocol):
         self._keywords_filter = KeywordsFilter(config)
         self._queue = Queue(
             logger=self._logger,
-            storage_file=config.get("queue_storage.file", self.DEFAULT_QUEUE_FILE)
+            storage_file=config.get("queue_storage.file", self.DEFAULT_QUEUE_FILE),
+            queue_item_object=QueuePost
         )
         self._publisher = Publisher(
             config=self._config,
@@ -126,8 +127,11 @@ class Main(RunnerProtocol):
 
                 # Trying to isolate the possible issues between parsers,
                 #   we secure the current queue before we move to the next parser.
+                self._logger.debug(f"Prepare queue of {self._queue.length()} items to be deduplicated")
                 self._queue.deduplicate()
+                self._logger.debug(f"Deduplicated. Now {self._queue.length()} items to be sorted")
                 self._queue.sort()
+                self._logger.debug(f"Sorted. Now {self._queue.length()} items to be saved")
                 self._queue.save()
 
                 # Now publish the queue, according to the config preferences.

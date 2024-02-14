@@ -1,6 +1,7 @@
 from __future__ import annotations
 from pyxavi.queue_stack import QueueItemProtocol
 from datetime import datetime
+import logging
 
 
 class QueuePost(QueueItemProtocol):
@@ -76,6 +77,8 @@ class QueuePost(QueueItemProtocol):
         )
 
     def sort_value(self, param: any = None) -> any:
+        if not isinstance(self.published_at, datetime):
+            logging.getLogger().error(self.to_dict())
         return self.published_at
 
     def unique_value(self, param: any = None) -> any:

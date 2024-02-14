@@ -87,6 +87,8 @@ class Publisher(MastodonPublisher):
         while should_continue and not self._queue.is_empty():
             # Get the first element from the queue
             queued_post = self._queue.pop().to_dict()
+            self._logger.debug(f"Picked the item {queued_post['id']} to process")
+            self._logger.debug(f"Queue has now {self._queue.length()} items")
             # Publish it
             result = self._execute_action(queued_post, previous_id=previous_id)
             # Let's capture the ID in case we want to do a thread
@@ -114,6 +116,7 @@ class Publisher(MastodonPublisher):
                     should_continue = False
 
         if not self._is_dry_run:
+            self._logger.debug(f"Attempting to write {self._queue.length()} items in our storage")
             self._queue.save()
 
     def __next_in_queue_matches_group_id(self, group_id: str) -> bool:
