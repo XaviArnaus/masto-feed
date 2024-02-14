@@ -29,11 +29,13 @@ class Main(RunnerProtocol):
     }
     MONTHS_POST_TOO_OLD = 6
     DEFAULT_QUEUE_FILE = "storage/queue.yaml"
+    # Be careful, these parameters are not completelly merged here.
+    #   There are still values defined in the module classes!
     DEFAULT = {
         "max_length": 400,
         "max_media_per_status": 4,
         "language": "en",
-        "merge_content": False,
+        "merge_content": True,
         "publish_only_older_toot": False
     }
 

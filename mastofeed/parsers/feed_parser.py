@@ -35,7 +35,7 @@ class FeedParser(ParserProtocol):
     }
 
     # This template only adds origin into the title
-    TEMPLATE_TITLE_WITH_ORIGIN = "$origin\t$title"
+    TEMPLATE_TITLE_WITH_ORIGIN = "$origin\n\t$title"
     # At this point title comes with origin if it should
     TEMPLATE_MERGED_CONTENT = "$title\n\n$body"
     # Whatever we have in body, we add the link to it
@@ -65,10 +65,22 @@ class FeedParser(ParserProtocol):
                 "url": params["feed_url"],
                 "name": params["name"]
                 if "name" in params and params["name"] is not None else alias,
-                "language_default": self.FEED_EMULATED_PARAMS["language_default"],
-                "language_overwrite": self.FEED_EMULATED_PARAMS["language_overwrite"],
-                "show_name": self.FEED_EMULATED_PARAMS["show_name"],
-                "max_summary_length": self.FEED_EMULATED_PARAMS["max_summary_length"],
+                "language_default":  self._config.get(
+                    "feed_parser.language_default",
+                    self.FEED_EMULATED_PARAMS["language_default"]
+                ),
+                "language_overwrite":  self._config.get(
+                    "feed_parser.language_overwrite",
+                    self.FEED_EMULATED_PARAMS["language_overwrite"]
+                ),
+                "show_name":  self._config.get(
+                    "feed_parser.show_name",
+                    self.FEED_EMULATED_PARAMS["show_name"]
+                ),
+                "max_summary_length":  self._config.get(
+                    "feed_parser.max_summary_length",
+                    self.FEED_EMULATED_PARAMS["max_summary_length"]
+                ),
             }
 
     def format_post_for_source(self, source: str, post: QueuePost) -> None:
