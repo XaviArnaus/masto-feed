@@ -14,19 +14,20 @@ import requests
 import feedparser
 import re
 
+
 class MentionsListener(StreamListener):
 
     NOTIFICATION_TYPE_MENTION = "mention"
 
     def load_config(self, config: Config):
         self._config = config
-    
+
     def on_notification(self, notification):
-        
+
         # Discard notifications that are not mentions
         if notification.type != self.NOTIFICATION_TYPE_MENTION:
             return False
-        
+
         # There we go
         mention_parser = MentionParser(config=self._config)
 
@@ -41,7 +42,7 @@ class MentionsListener(StreamListener):
 
         # And finally we answer back
         mention_parser.answer_back()
-        
+
 
 class MentionParser:
 
@@ -80,10 +81,7 @@ class MentionParser:
         self._feeds_storage = Storage(
             self._config.get("feed_parser.storage_file", self.DEFAULT_STORAGE_FILE)
         )
-        self._publisher = Publisher(
-            config=config,
-            base_path=ROOT_DIR
-        )
+        self._publisher = Publisher(config=config, base_path=ROOT_DIR)
         self.me = config.get("app.user")
         if self.me is None:
             RuntimeError("Please define app.user in the config")
@@ -95,14 +93,14 @@ class MentionParser:
     def load_mention(self, notification) -> None:
         self._logger.debug("Loading mention")
         self.mention = Mention.from_streaming_notification(notification)
-    
+
     def parse(self) -> bool:
 
         self._logger.debug("Parsing mention")
 
         if self.mention is None:
             raise RuntimeError("Load the mention successfully before trying to parse it")
-        
+
         # Before anything, remove the HTML stuff
         content = bs4(self.mention.content, features="html.parser").get_text()
 
@@ -139,7 +137,7 @@ class MentionParser:
         #   Because the complements needs change per action, this becomes more complex.
         #   The answer of this subcall is the answer of the call
         return self.parse_complements(words=words, quoted_text=quoted_text)
-    
+
     def execute(self) -> bool:
 
         self._logger.debug("Executing what the mention requests")
@@ -152,97 +150,125 @@ class MentionParser:
                 text = f"{self.error}\n\n{self.INFO_HELLO}"
             else:
                 text = self.error
-            self.answer = StatusPost.from_dict({
-                "status": self._format_answer(text),
-                "in_reply_to_id": self.mention.status_id,
-                "visibility": self.mention.visibility
-            })
+            self.answer = StatusPost.from_dict(
+                {
+                    "status": self._format_answer(text),
+                    "in_reply_to_id": self.mention.status_id,
+                    "visibility": self.mention.visibility
+                }
+            )
             return True
-        
+
         # So, let's answer according to the action
         elif self.action == MentionAction.HELLO:
 
-            self.answer = StatusPost.from_dict({
-                "status": self._format_answer(self.INFO_HELLO),
-                "in_reply_to_id": self.mention.status_id,
-                "visibility": self.mention.visibility
-            })
+            self.answer = StatusPost.from_dict(
+                {
+                    "status": self._format_answer(self.INFO_HELLO),
+                    "in_reply_to_id": self.mention.status_id,
+                    "visibility": self.mention.visibility
+                }
+            )
             return True
-            
+
         elif self.action == MentionAction.ADD:
             if not self.user_can_write():
-                self.answer = StatusPost.from_dict({
-                    "status": self._format_answer(self.ERROR_NOT_ALLOWED),
+                self.answer = StatusPost.from_dict(
+                    {
+                        "status": self._format_answer(self.ERROR_NOT_ALLOWED),
+                        "in_reply_to_id": self.mention.status_id,
+                        "visibility": self.mention.visibility
+                    }
+                )
+                return True
+
+            self._feeds_storage.set_slugged(
+                self.complements["alias"],
+                {
+                    "site_url": self.complements["site_url"],
+                    "feed_url": self.complements["feed_url"],
+                    "name": self.complements["name"]
+                }
+            )
+            self._feeds_storage.write_file()
+            self.answer = StatusPost.from_dict(
+                {
+                    "status": self._format_answer(self.INFO_ADDED),
                     "in_reply_to_id": self.mention.status_id,
                     "visibility": self.mention.visibility
-                })
-                return True
-            
-            self._feeds_storage.set_slugged(self.complements["alias"], {
-                "site_url": self.complements["site_url"],
-                "feed_url": self.complements["feed_url"],
-                "name": self.complements["name"]
-            })
-            self._feeds_storage.write_file()
-            self.answer = StatusPost.from_dict({
-                "status": self._format_answer(self.INFO_ADDED),
-                "in_reply_to_id": self.mention.status_id,
-                "visibility": self.mention.visibility
-            })
+                }
+            )
             return True
-            
+
         elif self.action == MentionAction.UPDATE:
             if not self.user_can_write():
-                self.answer = StatusPost.from_dict({
-                    "status": self._format_answer(self.ERROR_NOT_ALLOWED),
+                self.answer = StatusPost.from_dict(
+                    {
+                        "status": self._format_answer(self.ERROR_NOT_ALLOWED),
+                        "in_reply_to_id": self.mention.status_id,
+                        "visibility": self.mention.visibility
+                    }
+                )
+                return True
+
+            self._feeds_storage.set_slugged(
+                self.complements["alias"],
+                {
+                    "site_url": self.complements["site_url"],
+                    "feed_url": self.complements["feed_url"],
+                    "name": self.complements["name"]
+                }
+            )
+            self._feeds_storage.write_file()
+            self.answer = StatusPost.from_dict(
+                {
+                    "status": self._format_answer(self.INFO_UPDATED),
                     "in_reply_to_id": self.mention.status_id,
                     "visibility": self.mention.visibility
-                })
-                return True
-            
-            self._feeds_storage.set_slugged(self.complements["alias"], {
-                "site_url": self.complements["site_url"],
-                "feed_url": self.complements["feed_url"],
-                "name": self.complements["name"]
-            })
-            self._feeds_storage.write_file()
-            self.answer = StatusPost.from_dict({
-                "status": self._format_answer(self.INFO_UPDATED),
-                "in_reply_to_id": self.mention.status_id,
-                "visibility": self.mention.visibility
-            })
+                }
+            )
             return True
-            
+
         elif self.action == MentionAction.REMOVE:
             if not self.user_can_write():
-                self.answer = StatusPost.from_dict({
-                    "status": self._format_answer(self.ERROR_NOT_ALLOWED),
-                    "in_reply_to_id": self.mention.status_id,
-                    "visibility": self.mention.visibility
-                })
+                self.answer = StatusPost.from_dict(
+                    {
+                        "status": self._format_answer(self.ERROR_NOT_ALLOWED),
+                        "in_reply_to_id": self.mention.status_id,
+                        "visibility": self.mention.visibility
+                    }
+                )
                 return True
-            
+
             self._feeds_storage.delete(self.complements["alias"])
             self._feeds_storage.write_file()
-            self.answer = StatusPost.from_dict({
-                "status": self._format_answer(self.INFO_REMOVED),
-                "in_reply_to_id": self.mention.status_id,
-                "visibility": self.mention.visibility
-            })
+            self.answer = StatusPost.from_dict(
+                {
+                    "status": self._format_answer(self.INFO_REMOVED),
+                    "in_reply_to_id": self.mention.status_id,
+                    "visibility": self.mention.visibility
+                }
+            )
             return True
-            
+
         elif self.action == MentionAction.LIST:
             aliases = self._feeds_storage.get_all()
             if len(aliases) > 0:
-                registers = [f"[{alias}] {feed['name']}: {feed['site_url']} ({feed['feed_url']})" for alias, feed in aliases.items()]
+                registers = [
+                    f"[{alias}] {feed['name']}: {feed['site_url']} ({feed['feed_url']})"
+                    for alias,
+                    feed in aliases.items()
+                ]
             else:
                 registers = ["No registers yet"]
             registers = "\n".join(registers)
-            self.answer = StatusPost.from_dict({
-                "status": self._format_answer(f"{self.INFO_LIST_HEADER}{registers}"),
-                "in_reply_to_id": self.mention.status_id,
-                "visibility": self.mention.visibility
-            })
+            self.answer = StatusPost.from_dict(
+                {
+                    "status": self._format_answer(f"{self.INFO_LIST_HEADER}{registers}"),
+                    "in_reply_to_id": self.mention.status_id,
+                    "visibility": self.mention.visibility
+                }
+            )
             return True
 
         elif self.action == MentionAction.TEST:
@@ -252,13 +278,14 @@ class MentionParser:
             else:
                 text = f"The site URL {self.complements['site_url']} appears to have " +\
                         f"a valid feed at {self.complements['feed_url']}"
-            self.answer = StatusPost.from_dict({
-                "status": self._format_answer(text),
-                "in_reply_to_id": self.mention.status_id,
-                "visibility": self.mention.visibility
-            })
+            self.answer = StatusPost.from_dict(
+                {
+                    "status": self._format_answer(text),
+                    "in_reply_to_id": self.mention.status_id,
+                    "visibility": self.mention.visibility
+                }
+            )
             return True
-
 
     def answer_back(self) -> bool:
 
@@ -266,11 +293,9 @@ class MentionParser:
 
         return self._publisher.publish_status_post(status_post=self.answer)
 
-
     def _format_answer(self, text: str) -> str:
 
         return f"@{self.mention.username} {text}"
-
 
     def parse_complements(self, words: list, quoted_text: str = None) -> None:
 
@@ -284,7 +309,7 @@ class MentionParser:
         elif self.action == MentionAction.HELLO:
             # It does not need complements.
             return True
-            
+
         elif self.action == MentionAction.ADD:
             # First word needs to be a valid URL
             first_word = words.pop(0)
@@ -327,7 +352,7 @@ class MentionParser:
                 "name": quoted_text
             }
             return True
-            
+
         elif self.action == MentionAction.UPDATE:
             # First word needs to be an alias
             first_word = words.pop(0)
@@ -359,7 +384,7 @@ class MentionParser:
                 "name": quoted_text
             }
             return True
-            
+
         elif self.action == MentionAction.REMOVE:
             # First word needs to be an alias
             first_word = words.pop(0)
@@ -367,15 +392,13 @@ class MentionParser:
                 self.error = self.ERROR_NOT_FOUND_ALIAS
                 return False
             # Set it as complements
-            self.complements = {
-                "alias": first_word
-            }
+            self.complements = {"alias": first_word}
             return True
-            
+
         elif self.action == MentionAction.LIST:
             # It does not need complements.
             return True
-            
+
         elif self.action == MentionAction.TEST:
             # First word needs to be a valid URL
             first_word = words.pop(0)
@@ -394,36 +417,32 @@ class MentionParser:
                 # We have something. Let's see, we pick the first occurrence.
                 rss_url = list_of_possible_rss_urls[0]
             # And finally, set all of them as complements
-            self.complements = {
-                "site_url": first_word,
-                "feed_url": rss_url
-            }
+            self.complements = {"site_url": first_word, "feed_url": rss_url}
             return True
-
 
     def is_url_valid(self, url) -> bool:
         return True if validators.url(url) else False
-    
+
     def is_alias_valid(self, alias) -> bool:
         return alias == slugify(alias)
-    
+
     def small_user(self, username) -> str:
         return f"@{username.split('@')[1]}"
-    
+
     def user_can_write(self) -> str:
         return self._restrict_writes and (
             self.mention.username == self.admin.lstrip("@") or
             self.mention.username == self.small_user(self.admin).lstrip("@")
         )
-    
+
     def get_text_inside_quotes(self, content) -> str:
         m = re.search(self.REGEXP_TEXT_WITHIN_QUOTES, content, re.UNICODE)
         if m is None:
             return None
         else:
-            
+
             return m.group(1)
-    
+
     def is_url_a_valid_feed(self, url) -> bool:
         f = feedparser.parse(url)
         return len(f.entries) > 0
@@ -433,6 +452,7 @@ class MentionParser:
         It returns a list of URLs found in the given site's URL that have entries.
         so be prepared to receive an array.
         """
+
         def by_priority(element):
             if "rss" in element:
                 return 1
@@ -440,6 +460,7 @@ class MentionParser:
                 return 3
             else:
                 return 5
+
         # kindly adapted from
         #   https://alexmiller.phd/posts/python-3-feedfinder-rss-detection-from-url/
         # What I added:
@@ -457,10 +478,10 @@ class MentionParser:
         feed_urls = html.findAll("link", rel="alternate")
         if len(feed_urls) > 1:
             for f in feed_urls:
-                t = f.get("type",None)
+                t = f.get("type", None)
                 if t:
                     if "rss" in t or "xml" in t:
-                        href = f.get("href",None)
+                        href = f.get("href", None)
                         if href:
                             possible_feeds.append(href)
         # parsed_url = urlparse(site)
@@ -472,7 +493,7 @@ class MentionParser:
         #         if "xml" in href or "rss" in href or "feed" in href:
         #             possible_feeds.append(base+href)
         parsed_url = urlparse(site)
-        base = parsed_url.scheme+"://"+parsed_url.hostname
+        base = parsed_url.scheme + "://" + parsed_url.hostname
         for url in list(set(possible_feeds)):
             try_both = [url, base + url]
             for possible_feed_url in try_both:
@@ -480,7 +501,7 @@ class MentionParser:
                     if possible_feed_url not in result:
                         result.append(possible_feed_url)
         sorted(result, key=by_priority, reverse=True)
-        return(result)
+        return (result)
 
 
 class MentionAction:
@@ -536,7 +557,7 @@ class Mention:
         self.username = username
         self.visibility = visibility if visibility is not None\
             else StatusPostVisibility.PUBLIC
-    
+
     def to_dict(self) -> dict:
         return {
             "status_id": self.status_id,
@@ -544,7 +565,7 @@ class Mention:
             "username": self.username,
             "visibility": self.visibility
         }
-    
+
     def from_dict(mention: dict) -> Mention:
         return Mention(
             mention["status_id"] if "status_id" in mention else None,
@@ -555,9 +576,11 @@ class Mention:
         )
 
     def from_streaming_notification(notification) -> Mention:
-        return Mention.from_dict({
-            "status_id": notification.status.id,
-            "content": notification.status.content,
-            "username": notification.account.acct,
-            "visibility": notification.status.visibility
-        })
+        return Mention.from_dict(
+            {
+                "status_id": notification.status.id,
+                "content": notification.status.content,
+                "username": notification.account.acct,
+                "visibility": notification.status.visibility
+            }
+        )

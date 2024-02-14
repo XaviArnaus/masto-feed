@@ -19,7 +19,6 @@ class Listener(RunnerProtocol):
         self._config = config
         self._logger = logger
 
-
     def run(self) -> None:
 
         self._logger.info(f"{TerminalColor.MAGENTA}MastoFeed listener{TerminalColor.END}")
@@ -48,8 +47,7 @@ class Listener(RunnerProtocol):
             # Let's try an infinite loop
             self.run()
 
-    
-    def _get_default_mastodon_instance(self, named_account = "default"):
+    def _get_default_mastodon_instance(self, named_account="default"):
         return MastodonHelper.get_instance(
             connection_params=MastodonConnectionParams.from_dict(
                 self._config.get(f"mastodon.named_accounts.{named_account}")

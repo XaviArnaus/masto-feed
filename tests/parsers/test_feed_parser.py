@@ -20,34 +20,60 @@ CONFIG = {
     },
     "feed_parser": {
         "storage_file": "feeds.yaml",
-        "sites": [
-            {
-                "name": "News",
-                "url": "https://www.example.cat/rss/my_feed",
-                "language_default": "ca_ES",
-                "keywords_filter_profile": "talamanca",
-                "show_name": True
-            }
-        ]
+        # "sites": [
+        #     {
+        #         "name": "News",
+        #         "url": "https://www.example.cat/rss/my_feed",
+        #         "language_default": "ca_ES",
+        #         "keywords_filter_profile": "talamanca",
+        #         "show_name": True
+        #     }
+        # ]
+    }
+}
+
+# This is to emulate the temporary function load_sources()
+#   As it is quickly adapted to allocate the listener functionality.
+# The problem is that the values then are hardcoded in the class,
+#   and for all sources, so testing here language, keywords and show_name
+#   stay emulated for the next iteration, where I expect to anyhow bring back
+#   the functionality.
+SOURCES = {
+    "news": {
+        "name": "News",
+        "url": "https://www.example.cat/rss/my_feed",
+        "language_default": "en",  # "language_default": "ca_ES",
+        "language_overwrite": False,
+        "keywords_filter_profile": "talamanca",
+        "show_name": False,
+        "max_summary_length": 4500
     }
 }
 
 # This keeps the state of already seen
-FEEDS = {}
+FEEDS = {
+    "news": {
+        "name": "News",
+        "site_url": "https://www.example.cat/",
+        "feed_url": "https://www.example.cat/rss/my_feed",
+    }
+}
 
 
 @pytest.fixture(autouse=True)
 def setup_function():
 
-    global CONFIG, FEEDS
+    global CONFIG, FEEDS, SOURCES
 
     backup_config = copy.deepcopy(CONFIG)
     backup_feeds = copy.deepcopy(FEEDS)
+    backup_sources = copy.deepcopy(SOURCES)
 
     yield
 
     FEEDS = backup_feeds
     CONFIG = backup_config
+    SOURCES = backup_sources
 
 
 def patch_storage_read_file(self):
@@ -70,21 +96,21 @@ def test_instantiation():
     assert isinstance(instance._config, Config)
     assert isinstance(instance._logger, BuiltInLogger)
     assert isinstance(instance._feeds_storage, Storage)
-    assert instance._sources == {
-        CONFIG["feed_parser"]["sites"][0]["name"]: CONFIG["feed_parser"]["sites"][0]
-    }
+    for source, params in instance._sources.items():
+        for key, value in params.items():
+            assert params[key] == SOURCES[source][key]
 
 
 def test_get_sources():
     instance = get_instance()
 
-    assert instance.get_sources() == {
-        CONFIG["feed_parser"]["sites"][0]["name"]: CONFIG["feed_parser"]["sites"][0]
-    }
+    for source, params in instance.get_sources().items():
+        for key, value in params.items():
+            assert params[key] == SOURCES[source][key]
 
 
 def test_get_raw_content_for_source_no_entries_incoming():
-    source = CONFIG["feed_parser"]["sites"][0]["name"]
+    source = list(SOURCES.keys())[0]
 
     instance = get_instance()
 
@@ -93,7 +119,7 @@ def test_get_raw_content_for_source_no_entries_incoming():
     with patch.object(feedparser, "parse", new=mocked_feedparser_parse):
         raw_content = instance.get_raw_content_for_source(source)
 
-    mocked_feedparser_parse.assert_called_once_with(CONFIG["feed_parser"]["sites"][0]["url"])
+    mocked_feedparser_parse.assert_called_once_with(SOURCES["news"]["url"])
     assert raw_content == []
 
 
@@ -207,11 +233,12 @@ def __prepare_expected_entries_for_entries(
     return expected_entry
 
 
-def test_get_raw_content_for_source_with_language_override(
+def test_get_raw_content_for_source_with_language_overwrite(
     entry_1, entry_2, entry_3, entry_4, entry_5
 ):
-    source = CONFIG["feed_parser"]["sites"][0]["name"]
-    CONFIG["feed_parser"]["sites"][0]["language_override"] = True
+    source = list(SOURCES.keys())[0]
+    SOURCES["news"]["language_overwrite"] = True
+    SOURCES["news"]["language_default"] = "es"
     # Let's put them all together in a list. It will be useful for further preps
     entries = [entry_1, entry_2, entry_3, entry_4, entry_5]
 
@@ -227,7 +254,7 @@ def test_get_raw_content_for_source_with_language_override(
     # Now we prepare the returned elements
     indexes = ["1", "2", "4"]
     expected_entry = __prepare_expected_entries_for_entries(
-        entries, indexes, CONFIG["feed_parser"]["sites"][0]["language_default"]
+        entries, indexes, SOURCES["news"]["language_default"]
     )
     expected_result = [expected_entry["1"], expected_entry["2"], expected_entry["4"]]
 
@@ -241,7 +268,7 @@ def test_get_raw_content_for_source_with_language_override(
     raw_content_titles = [x.raw_content["title"] for x in raw_content]
     expected_titles = [x.raw_content["title"] for x in expected_result]
 
-    mocked_feedparser_parse.assert_called_once_with(CONFIG["feed_parser"]["sites"][0]["url"])
+    mocked_feedparser_parse.assert_called_once_with(SOURCES["news"]["url"])
     assert raw_content_titles == expected_titles
 
     for idx in range(0, len(indexes)):
@@ -254,10 +281,10 @@ def test_get_raw_content_for_source_with_language_override(
         assert raw_content[idx].language == expected_entry[indexes[idx]].language
 
 
-def test_get_raw_content_for_source_without_language_override(
+def test_get_raw_content_for_source_without_language_overwrite(
     entry_1, entry_2, entry_3, entry_4, entry_5
 ):
-    source = CONFIG["feed_parser"]["sites"][0]["name"]
+    source = list(SOURCES.keys())[0]
     # Let's put them all together in a list. It will be useful for further preps
     entries = [entry_1, entry_2, entry_3, entry_4, entry_5]
 
@@ -287,7 +314,7 @@ def test_get_raw_content_for_source_without_language_override(
     raw_content_titles = [x.raw_content["title"] for x in raw_content]
     expected_titles = [x.raw_content["title"] for x in expected_result]
 
-    mocked_feedparser_parse.assert_called_once_with(CONFIG["feed_parser"]["sites"][0]["url"])
+    mocked_feedparser_parse.assert_called_once_with(SOURCES["news"]["url"])
     assert raw_content_titles == expected_titles
 
     for idx in range(0, len(indexes)):
@@ -300,13 +327,13 @@ def test_get_raw_content_for_source_without_language_override(
         assert raw_content[idx].language == expected_entry[indexes[idx]].language
 
 
-def test_get_raw_content_for_source_without_language_override_nor_default_nor_in_feed(
+def test_get_raw_content_for_source_without_language_overwrite_nor_default_nor_in_feed(
     entry_1, entry_2, entry_3, entry_4, entry_5
 ):
     # Remove the language default
-    del (CONFIG["feed_parser"]["sites"][0]["language_default"])
+    del (SOURCES["news"]["language_default"])
 
-    source = CONFIG["feed_parser"]["sites"][0]["name"]
+    source = list(SOURCES.keys())[0]
     # Let's put them all together in a list. It will be useful for further preps
     entries = [entry_1, entry_2, entry_3, entry_4, entry_5]
 
@@ -329,7 +356,7 @@ def test_get_raw_content_for_source_without_language_override_nor_default_nor_in
     raw_content_titles = [x.raw_content["title"] for x in raw_content]
     expected_titles = [x.raw_content["title"] for x in expected_result]
 
-    mocked_feedparser_parse.assert_called_once_with(CONFIG["feed_parser"]["sites"][0]["url"])
+    mocked_feedparser_parse.assert_called_once_with(SOURCES["news"]["url"])
     assert raw_content_titles == expected_titles
 
     for idx in range(0, len(indexes)):
@@ -342,11 +369,11 @@ def test_get_raw_content_for_source_without_language_override_nor_default_nor_in
         assert raw_content[idx].language == expected_entry[indexes[idx]].language
 
 
-def test_get_raw_content_for_source_without_language_override_nor_language_in_feed(
+def test_get_raw_content_for_source_without_language_overwrite_nor_language_in_feed(
     entry_1, entry_2, entry_3, entry_4, entry_5
 ):
 
-    source = CONFIG["feed_parser"]["sites"][0]["name"]
+    source = list(SOURCES.keys())[0]
     # Let's put them all together in a list. It will be useful for further preps
     entries = [entry_1, entry_2, entry_3, entry_4, entry_5]
 
@@ -357,7 +384,7 @@ def test_get_raw_content_for_source_without_language_override_nor_language_in_fe
     # Now we prepare the returned elements
     indexes = ["1", "2", "4"]
     expected_entry = __prepare_expected_entries_for_entries(
-        entries, indexes, CONFIG["feed_parser"]["sites"][0]["language_default"]
+        entries, indexes, SOURCES["news"]["language_default"]
     )
     expected_result = [expected_entry["1"], expected_entry["2"], expected_entry["4"]]
 
@@ -371,7 +398,7 @@ def test_get_raw_content_for_source_without_language_override_nor_language_in_fe
     raw_content_titles = [x.raw_content["title"] for x in raw_content]
     expected_titles = [x.raw_content["title"] for x in expected_result]
 
-    mocked_feedparser_parse.assert_called_once_with(CONFIG["feed_parser"]["sites"][0]["url"])
+    mocked_feedparser_parse.assert_called_once_with(SOURCES["news"]["url"])
     assert raw_content_titles == expected_titles
 
     for idx in range(0, len(indexes)):
@@ -386,7 +413,7 @@ def test_get_raw_content_for_source_without_language_override_nor_language_in_fe
 
 def test_is_id_already_seen_for_source_no_stack():
 
-    source = CONFIG["feed_parser"]["sites"][0]["name"]
+    source = list(SOURCES.keys())[0]
 
     instance = get_instance()
 
@@ -396,10 +423,10 @@ def test_is_id_already_seen_for_source_no_stack():
 def test_is_id_already_seen_for_source_match():
     global FEEDS
 
-    source = CONFIG["feed_parser"]["sites"][0]["name"]
+    source = list(SOURCES.keys())[0]
     id = "//domain.com/blog_entry_1.html"
 
-    FEEDS = {"https-www-example-cat-rss-my-feed": {"urls_seen": [id]}}
+    FEEDS["news"]["urls_seen"] = [id]
 
     instance = get_instance()
 
@@ -407,20 +434,19 @@ def test_is_id_already_seen_for_source_match():
 
 
 def test_is_id_already_seen_for_source_not_match():
-    source = CONFIG["feed_parser"]["sites"][0]["name"]
+    source = list(SOURCES.keys())[0]
     id = "//domain.com/blog_entry_1.html"
 
     instance = get_instance()
-    instance._feeds_storage.set_hashed(
-        param_name=CONFIG["feed_parser"]["sites"][0]["url"],
-        value={"urls_seen": ["//domain.com/blog_entry_2.html"]}
+    instance._feeds_storage.set(
+        param_name="news.urls_seen", value=["//domain.com/blog_entry_2.html"]
     )
 
     assert instance.is_id_already_seen_for_source(source, id) is False
 
 
 def test_set_ids_as_seen_for_source_from_scratch():
-    source = CONFIG["feed_parser"]["sites"][0]["name"]
+    source = list(SOURCES.keys())[0]
     id1 = "//domain.com/blog_entry_1.html"
     id2 = "//domain.com/blog_entry_2.html"
     id3 = "//domain.com/blog_entry_3.html"
@@ -448,12 +474,12 @@ def test_set_ids_as_seen_for_source_from_scratch():
 def test_set_ids_as_seen_for_source_adding_some():
     global FEEDS
 
-    source = CONFIG["feed_parser"]["sites"][0]["name"]
+    source = list(SOURCES.keys())[0]
     id1 = "//domain.com/blog_entry_1.html"
     id2 = "//domain.com/blog_entry_2.html"
     id3 = "//domain.com/blog_entry_3.html"
     id4 = "//domain.com/blog_entry_4.html"
-    FEEDS = {"https-www-example-cat-rss-my-feed": {"urls_seen": [id1, id2]}}
+    FEEDS["news"]["urls_seen"] = [id1, id2]
 
     instance = get_instance()
 
@@ -543,9 +569,9 @@ def test_parse_media_has_two_media():
 def test_format_post_for_source_clean_body(body, expected_body):
     title = "I am a title"
     link = "http://domain.com/blog_post_1.html"
-    source = "News"
+    source = list(SOURCES.keys())[0]
     post = QueuePost(raw_content={"title": title, "body": body, "url": link})
-    CONFIG["feed_parser"]["sites"][0] = {"name": source}
+    SOURCES["news"] = {"name": source}
 
     instance = get_instance()
 
@@ -564,14 +590,16 @@ def test_format_post_for_source_show_name():
     title = "I am a title"
     body = "I am the body"
     link = "http://domain.com/blog_post_1.html"
-    source = "News"
+    source = list(SOURCES.keys())[0]
     post = QueuePost(raw_content={"title": title, "body": body, "url": link})
-    CONFIG["feed_parser"]["sites"][0] = {"name": source, "show_name": True}
+    SOURCES["news"]["show_name"] = True
 
     instance = get_instance()
+    # This is needed now while we have the _load_sources emulating method
+    instance._sources["news"]["show_name"] = True
 
     expected_title = Template(instance.TEMPLATE_TITLE_WITH_ORIGIN).substitute(
-        title=title, origin=source
+        title=title, origin=SOURCES["news"]["name"]
     )
     expected_body = Template(instance.TEMPLATE_SUMMARY_CONTENT).substitute(body=body, link=link)
 
@@ -585,16 +613,17 @@ def test_format_post_for_source_show_name_max_length_above():
     title = "I am a title"
     body = "I am the body"
     link = "http://domain.com/blog_post_1.html"
-    source = "News"
+    source = list(SOURCES.keys())[0]
     post = QueuePost(raw_content={"title": title, "body": body, "url": link})
-    CONFIG["feed_parser"]["sites"][0] = {
-        "name": source, "show_name": True, "max_summary_length": 500
-    }
+    SOURCES["news"]["show_name"] = True
+    SOURCES["news"]["max_summary_length"] = 500
 
     instance = get_instance()
+    # This is needed now while we have the _load_sources emulating method
+    instance._sources["news"]["show_name"] = True
 
     expected_title = Template(instance.TEMPLATE_TITLE_WITH_ORIGIN).substitute(
-        title=title, origin=source
+        title=title, origin=SOURCES["news"]["name"]
     )
     expected_body = Template(instance.TEMPLATE_SUMMARY_CONTENT).substitute(body=body, link=link)
 
@@ -608,16 +637,19 @@ def test_format_post_for_source_show_name_max_length_cut_by_source():
     title = "I am a title"
     body = "I am the body"
     link = "http://domain.com/blog_post_1.html"
-    source = "News"
+    source = list(SOURCES.keys())[0]
     post = QueuePost(raw_content={"title": title, "body": body, "url": link})
-    CONFIG["feed_parser"]["sites"][0] = {
-        "name": source, "show_name": True, "max_summary_length": 45
-    }
+    # This is unused now while we have the _load_sources emulating method
+    # SOURCES["news"]["show_name"] = True
+    # SOURCES["news"]["max_summary_length"] = 45
 
     instance = get_instance()
+    # This is needed now while we have the _load_sources emulating method
+    instance._sources["news"]["show_name"] = True
+    instance._sources["news"]["max_summary_length"] = 45
 
     expected_title = Template(instance.TEMPLATE_TITLE_WITH_ORIGIN).substitute(
-        title=title, origin=source
+        title=title, origin=SOURCES["news"]["name"]
     )
     expected_body = Template(instance.TEMPLATE_SUMMARY_CONTENT).substitute(
         body="I am t...", link=link
@@ -634,15 +666,18 @@ def test_format_post_for_source_show_name_max_length_cut_by_param():
     title = "I am a title"
     body = "I am the body"
     link = "http://domain.com/blog_post_1.html"
-    source = "News"
+    source = list(SOURCES.keys())[0]
     post = QueuePost(raw_content={"title": title, "body": body, "url": link})
-    CONFIG["feed_parser"]["sites"][0] = {"name": source, "show_name": True}
+    SOURCES["news"]["show_name"] = True
     CONFIG["default"] = {"max_length": 45}
 
     instance = get_instance()
+    # This is needed now while we have the _load_sources emulating method
+    instance._sources["news"]["show_name"] = True
+    del (instance._sources["news"]["max_summary_length"])
 
     expected_title = Template(instance.TEMPLATE_TITLE_WITH_ORIGIN).substitute(
-        title=title, origin=source
+        title=title, origin=SOURCES["news"]["name"]
     )
     expected_body = Template(instance.TEMPLATE_SUMMARY_CONTENT).substitute(
         body="I am t...", link=link
@@ -659,16 +694,19 @@ def test_format_post_for_source_show_name_max_length_cut_by_default():
     title = "I am a title"
     body = "I am the body"
     link = "http://domain.com/blog_post_1.html"
-    source = "News"
+    source = list(SOURCES.keys())[0]
     post = QueuePost(raw_content={"title": title, "body": body, "url": link})
-    CONFIG["feed_parser"]["sites"][0] = {"name": source, "show_name": True}
+    SOURCES["news"]["show_name"] = True
 
     instance = get_instance()
+    # This is needed now while we have the _load_sources emulating method
+    instance._sources["news"]["show_name"] = True
+    del (instance._sources["news"]["max_summary_length"])
 
     instance.MAX_SUMMARY_LENGTH = 45
 
     expected_title = Template(instance.TEMPLATE_TITLE_WITH_ORIGIN).substitute(
-        title=title, origin=source
+        title=title, origin=SOURCES["news"]["name"]
     )
     expected_body = Template(instance.TEMPLATE_SUMMARY_CONTENT).substitute(
         body="I am t...", link=link
@@ -685,9 +723,9 @@ def test_format_post_for_source_no_show_name_missing_param():
     title = "I am a title"
     body = "I am the body"
     link = "http://domain.com/blog_post_1.html"
-    source = "News"
+    source = list(SOURCES.keys())[0]
     post = QueuePost(raw_content={"title": title, "body": body, "url": link})
-    CONFIG["feed_parser"]["sites"][0] = {"name": source}
+    SOURCES["news"] = {"name": source}
 
     instance = get_instance()
 
@@ -704,9 +742,9 @@ def test_format_post_for_source_no_show_name():
     title = "I am a title"
     body = "I am the body"
     link = "http://domain.com/blog_post_1.html"
-    source = "News"
+    source = list(SOURCES.keys())[0]
     post = QueuePost(raw_content={"title": title, "body": body, "url": link})
-    CONFIG["feed_parser"]["sites"][0] = {"name": source, "show_name": False}
+    SOURCES["news"] = {"name": source, "show_name": False}
 
     instance = get_instance()
 
@@ -723,9 +761,9 @@ def test_format_post_for_source_merge_content():
     title = "I am a title"
     body = "I am the body"
     link = "http://domain.com/blog_post_1.html"
-    source = "News"
+    source = list(SOURCES.keys())[0]
     post = QueuePost(raw_content={"title": title, "body": body, "url": link})
-    CONFIG["feed_parser"]["sites"][0] = {"name": source, "show_name": False}
+    SOURCES["news"] = {"name": source, "show_name": False}
     CONFIG["default"] = {"merge_content": True}
 
     instance = get_instance()

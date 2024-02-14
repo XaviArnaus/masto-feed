@@ -40,17 +40,19 @@ class Main(RunnerProtocol):
     def __init__(self, config: Config, logger: logging, params: dict = None) -> None:
         self._config = config
         self._logger = logger
+
+        self._keywords_filter = KeywordsFilter(config)
+        self._queue = Queue(
+            logger=self._logger,
+            storage_file=config.get("queue_storage.file", self.DEFAULT_QUEUE_FILE)
+        )
         self._publisher = Publisher(
             config=self._config,
             base_path=ROOT_DIR,
             only_oldest=self._config.get(
                 "publisher.only_older_toot", self.DEFAULT["publish_only_older_toot"]
-            )
-        )
-        self._keywords_filter = KeywordsFilter(config)
-        self._queue = Queue(
-            logger=self._logger,
-            storage_file=config.get("queue_storage.file", self.DEFAULT_QUEUE_FILE)
+            ),
+            queue=self._queue
         )
 
     def run(self) -> None:
@@ -78,6 +80,7 @@ class Main(RunnerProtocol):
 
                     # Get all the raw data related to this source
                     posts = instance.get_raw_content_for_source(source)
+                    self._logger.debug(f"Ready to process {len(posts)} posts.")
 
                     # Walk the posts to process them
                     valid_posts = []  # type: list[QueuePost]
@@ -85,13 +88,13 @@ class Main(RunnerProtocol):
                     for post in posts:
 
                         # Apply filters
-                        if self._is_already_seen(post=post, source=source, instance=instance)\
-                           or not self._is_valid_date(post=post)\
-                           or not self._is_valid_keyword_profile(
-                               post=post, source_params=parameters
-                           ):
+                        if self.is_post_invalid(post=post,
+                                                source=source,
+                                                instance=instance,
+                                                source_params=parameters):
                             discarded_posts += 1
                             continue
+
                         valid_posts.append(post)
 
                     color = TerminalColor.END if discarded_posts == 0 else TerminalColor.RED
@@ -157,13 +160,45 @@ class Main(RunnerProtocol):
         )
         return parsers_config
 
+    def is_post_invalid(
+        self, post: QueuePost, source: str, instance: ParserProtocol, source_params: dict
+    ) -> bool:
+
+        result = False
+        if self._is_already_seen(post=post, source=source, instance=instance):
+            result = True
+        if not self._is_valid_date(post=post):
+            result = True
+        if not self._is_valid_keyword_profile(post=post, source_params=source_params):
+            result = True
+
+        return result
+
     def _is_valid_date(self, post: QueuePost) -> bool:
         # From the post we receive a datetime in the [published_at]
         #   Careful, the datetime is not UTF safe.
         initial_outdated_day = datetime.now().replace(tzinfo=pytz.UTC)\
             - relativedelta(months=self.MONTHS_POST_TOO_OLD)
 
-        if initial_outdated_day > post.published_at.replace(tzinfo=pytz.UTC):
+        # Ensure we're measuring dates in UTC
+        post_date_in_utc = post.published_at.replace(tzinfo=pytz.UTC)
+
+        # Ensure that we have valid dates to perform the comparison.
+        if not isinstance(post_date_in_utc, datetime):
+            self._logger.warning(
+                f"Discarding post {post.id}: Date {str(post.published_at)} is not a valid datetime"
+            )
+            return False
+
+        # Let me debug the comparison.
+        format = "%Y-%m-%d"
+        self._logger.debug(
+            f"{initial_outdated_day.strftime(format)} < " +\
+            f"{post.published_at.replace(tzinfo=pytz.UTC).strftime(format)}: " +\
+            f"{'Valid' if initial_outdated_day < post.published_at.replace(tzinfo=pytz.UTC) else 'Too Old'}")
+
+        # Ok, now the proper comparison.
+        if initial_outdated_day < post.published_at.replace(tzinfo=pytz.UTC):
             return True
 
         self._logger.debug(

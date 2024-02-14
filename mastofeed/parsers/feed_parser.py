@@ -12,7 +12,6 @@ from string import Template
 import feedparser
 import logging
 import re
-from pyxavi.debugger import dd
 
 
 class FeedParser(ParserProtocol):
@@ -24,15 +23,14 @@ class FeedParser(ParserProtocol):
     MAX_SUMMARY_LENGTH = 300
     DEFAULT_LANGUAGE = "en"
     DEFAULT_STORAGE_FILE = "storage/feeds.yaml"
-    
+
     FEED_EMULATED_PARAMS = {
         # [String]
         "language_default": "en",
         # [Bool] Overwrite original language with defined default language.
-        "language_overwrite": True,
+        "language_overwrite": False,
         # [Bool] Shows an initial line wit the name of the site like "{name}:\n"
-        "show_name": False,
-        # [Int] Max summary length
+        "show_name": False,  # [Int] Max summary length
         "max_summary_length": 4500
     }
 
@@ -52,21 +50,21 @@ class FeedParser(ParserProtocol):
         # self._sources = {x["name"]: x for x in self._config.get("feed_parser.sites", [])}
         self._load_sources()
         self._already_seen = {}  # type: dict[str, list]
-    
+
     def _load_sources(self) -> None:
         # This takes the data from the self._feeds_storage,
-        #   that since the listener contains also the sites data,
-        #   and builds the sources emulating the config "feed_parser.sites".
+        #   that since the new listener, it contains also the sites data,
+        #   and thus builds the sources emulating the config "feed_parser.sites".
         #   In a later interation this should be merged into the code,
         #   discarding the config totally.
 
         self._sources = {}
-        all_registers = self._feeds_storage.get_all()
         for alias, params in self._feeds_storage.get_all().items():
-            
+
             self._sources[alias] = {
                 "url": params["feed_url"],
-                "name": params["name"] if "name" in params and params["name"] is not None else alias,
+                "name": params["name"]
+                if "name" in params and params["name"] is not None else alias,
                 "language_default": self.FEED_EMULATED_PARAMS["language_default"],
                 "language_overwrite": self.FEED_EMULATED_PARAMS["language_overwrite"],
                 "show_name": self.FEED_EMULATED_PARAMS["show_name"],
@@ -146,8 +144,8 @@ class FeedParser(ParserProtocol):
         default_language = self._sources[source]["language_default"]\
             if "language_default" in self._sources[source] else None
 
-        shall_override_with_default_language = self._sources[source]["language_override"]\
-            if "language_override" in self._sources[source] else False
+        shall_override_with_default_language = self._sources[source]["language_overwrite"]\
+            if "language_overwrite" in self._sources[source] else False
 
         # Priority order:
         #   overriding language > content language > source parameters language > class language
@@ -247,16 +245,22 @@ class FeedParser(ParserProtocol):
         if source not in self._already_seen or self._already_seen[source] is None:
             self._logger.debug("Getting possible stored data for %s", source)
             self._already_seen[source] = self._feeds_storage.get(f"{source}.urls_seen", [])
+            self._logger.debug(
+                f"The source {source} has {len(self._already_seen[source])} seen URLs in our storage"
+            )
 
         return True if id in self._already_seen[source] else False
 
     def set_ids_as_seen_for_source(self, source: str, list_of_ids: list) -> None:
         """Performs the saving of the seen state"""
 
+        self._logger.debug(f"Adding {len(list_of_ids)} seen URLs to {source}")
         for new_url in list_of_ids:
             self._already_seen[source].append(new_url)
 
-        self._logger.debug(f"Updating seen URLs for {source}")
+        self._logger.debug(
+            f"Updating {len(self._already_seen[source])} seen URLs in the storage for {source}"
+        )
         self._feeds_storage.set(f"{source}.urls_seen", self._already_seen[source])
         self._feeds_storage.write_file()
 

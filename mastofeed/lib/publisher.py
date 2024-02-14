@@ -6,6 +6,7 @@ from pyxavi.queue_stack import Queue
 from pyxavi.mastodon_helper import StatusPost
 import os
 
+
 class Publisher(MastodonPublisher):
     '''
     Publisher
@@ -20,7 +21,8 @@ class Publisher(MastodonPublisher):
         config: Config,
         named_account: str = "default",
         base_path: str = None,
-        only_oldest: bool = False
+        only_oldest: bool = False,
+        queue: Queue = None
     ) -> None:
 
         logger = Logger(config=config).get_logger()
@@ -29,10 +31,14 @@ class Publisher(MastodonPublisher):
             config=config, logger=logger, named_account=named_account, base_path=base_path
         )
 
-        queue_storage_file = config.get("queue_storage.file", self.DEFAULT_QUEUE_FILE)
-        if base_path is not None:
-            queue_storage_file = os.path.join(base_path, queue_storage_file)
-        self._queue = Queue(logger=logger, storage_file=queue_storage_file)
+        if queue is None:
+            queue_storage_file = config.get("queue_storage.file", self.DEFAULT_QUEUE_FILE)
+            if base_path is not None:
+                queue_storage_file = os.path.join(base_path, queue_storage_file)
+            self._queue = Queue(logger=logger, storage_file=queue_storage_file)
+        else:
+            self._queue = queue
+
         self._only_oldest = only_oldest if only_oldest is not None\
             else config.get("publisher.only_oldest_post_every_iteration", False)
 
