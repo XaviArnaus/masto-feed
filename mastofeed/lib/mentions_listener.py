@@ -4,14 +4,11 @@ from pyxavi.config import Config
 from pyxavi.logger import Logger
 from pyxavi.storage import Storage
 from pyxavi.mastodon_helper import StatusPost, StatusPostVisibility
+from pyxavi.url import Url
 from mastofeed.lib.publisher import Publisher
 from definitions import ROOT_DIR
 from slugify import slugify
-import validators
-from urllib.parse import urlparse
 from bs4 import BeautifulSoup as bs4
-import requests
-import feedparser
 import re
 
 
@@ -313,15 +310,15 @@ class MentionParser:
         elif self.action == MentionAction.ADD:
             # First word needs to be a valid URL
             first_word = words.pop(0)
-            if not self.is_url_valid(first_word):
+            if not Url.is_valid(first_word):
                 self.error = self.ERROR_INVALID_URL
                 return False
             # It could be already a RSS URL
-            if self.is_url_a_valid_feed(first_word):
+            if Url.is_a_valid_feed(first_word):
                 rss_url = first_word
             else:
                 # Second, needs to be a valid RSS
-                list_of_possible_rss_urls = self.findfeed(first_word)
+                list_of_possible_rss_urls = Url.findfeeds(first_word)
                 if len(list_of_possible_rss_urls) == 0:
                     self.error = self.ERROR_INVALID_RSS
                     return False
@@ -361,15 +358,15 @@ class MentionParser:
                 return False
             # Second needs to be a valid URL
             second_word = words.pop(0)
-            if not self.is_url_valid(second_word):
+            if not Url.is_valid(second_word):
                 self.error = self.ERROR_INVALID_URL
                 return False
             # It could be already a RSS URL
-            if self.is_url_a_valid_feed(first_word):
+            if Url.is_a_valid_feed(first_word):
                 rss_url = first_word
             else:
                 # ... and contain a RSS
-                list_of_possible_rss_urls = self.findfeed(second_word)
+                list_of_possible_rss_urls = Url.findfeeds(second_word)
                 if len(list_of_possible_rss_urls) == 0:
                     self.error = self.ERROR_INVALID_RSS
                     return False
@@ -402,15 +399,15 @@ class MentionParser:
         elif self.action == MentionAction.TEST:
             # First word needs to be a valid URL
             first_word = words.pop(0)
-            if not self.is_url_valid(first_word):
+            if not Url.is_valid(first_word):
                 self.error = self.ERROR_INVALID_URL
                 return False
             # It could be already a RSS URL
-            if self.is_url_a_valid_feed(first_word):
+            if Url.is_a_valid_feed(first_word):
                 rss_url = first_word
             else:
                 # Second, needs to be a valid RSS
-                list_of_possible_rss_urls = self.findfeed(first_word)
+                list_of_possible_rss_urls = Url.findfeeds(first_word)
                 if len(list_of_possible_rss_urls) == 0:
                     self.error = self.ERROR_INVALID_RSS
                     return False
@@ -419,9 +416,6 @@ class MentionParser:
             # And finally, set all of them as complements
             self.complements = {"site_url": first_word, "feed_url": rss_url}
             return True
-
-    def is_url_valid(self, url) -> bool:
-        return True if validators.url(url) else False
 
     def is_alias_valid(self, alias) -> bool:
         return alias == slugify(alias)
@@ -442,66 +436,6 @@ class MentionParser:
         else:
 
             return m.group(1)
-
-    def is_url_a_valid_feed(self, url) -> bool:
-        f = feedparser.parse(url)
-        return len(f.entries) > 0
-
-    def findfeed(self, site):
-        """
-        It returns a list of URLs found in the given site's URL that have entries.
-        so be prepared to receive an array.
-        """
-
-        def by_priority(element):
-            if "rss" in element:
-                return 1
-            elif "atom" in element:
-                return 3
-            else:
-                return 5
-
-        # kindly adapted from
-        #   https://alexmiller.phd/posts/python-3-feedfinder-rss-detection-from-url/
-        # What I added:
-        #   1. Send a HEAD first, so we can follow redirections
-        #   2. Do not search within the body, only the LINK inside the HEAD
-        #   3. Add the base URL in case the RSS link is relative
-        #   4. Sort, I want RSS mainly
-
-        # Get the header first, so we know if there is a redirection
-        r = requests.head(site, allow_redirects=True)
-        raw = requests.get(r.url).text
-        result = []
-        possible_feeds = []
-        html = bs4(raw, features="html.parser")
-        feed_urls = html.findAll("link", rel="alternate")
-        if len(feed_urls) > 1:
-            for f in feed_urls:
-                t = f.get("type", None)
-                if t:
-                    if "rss" in t or "xml" in t:
-                        href = f.get("href", None)
-                        if href:
-                            possible_feeds.append(href)
-        # parsed_url = urlparse(site)
-        # base = parsed_url.scheme+"://"+parsed_url.hostname
-        # atags = html.findAll("a")
-        # for a in atags:
-        #     href = a.get("href",None)
-        #     if href:
-        #         if "xml" in href or "rss" in href or "feed" in href:
-        #             possible_feeds.append(base+href)
-        parsed_url = urlparse(site)
-        base = parsed_url.scheme + "://" + parsed_url.hostname
-        for url in list(set(possible_feeds)):
-            try_both = [url, base + url]
-            for possible_feed_url in try_both:
-                if self.is_url_a_valid_feed(possible_feed_url):
-                    if possible_feed_url not in result:
-                        result.append(possible_feed_url)
-        sorted(result, key=by_priority, reverse=True)
-        return (result)
 
 
 class MentionAction:
