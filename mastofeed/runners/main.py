@@ -80,7 +80,7 @@ class Main(RunnerProtocol):
                 for source, parameters in instance.get_sources().items():
 
                     self._logger.info(
-                        f"{TerminalColor.BLUE}Processing source " +\
+                        f"{TerminalColor.BLUE}Processing source " +
                         f"{TerminalColor.YELLOW}{source}{TerminalColor.END}"
                     )
 
@@ -199,19 +199,24 @@ class Main(RunnerProtocol):
         # Ensure that we have valid dates to perform the comparison.
         if not isinstance(post_date_in_utc, datetime):
             self._logger.warning(
-                f"Discarding post {post.id}: Date {str(post.published_at)} is not a valid datetime"
+                f"Discarding post {post.id}: " +
+                f"Date {str(post.published_at)} is not a valid datetime"
             )
             return False
+
+        # Actual date calculation.
+        is_valid = initial_outdated_day < post.published_at.replace(tzinfo=pytz.UTC)
 
         # Let me debug the comparison.
         format = "%Y-%m-%d"
         self._logger.debug(
-            f"{initial_outdated_day.strftime(format)} < " +\
-            f"{post.published_at.replace(tzinfo=pytz.UTC).strftime(format)}: " +\
-            f"{'Valid' if initial_outdated_day < post.published_at.replace(tzinfo=pytz.UTC) else 'Too Old'}")
+            f"{initial_outdated_day.strftime(format)} < " +
+            f"{post.published_at.replace(tzinfo=pytz.UTC).strftime(format)}: " +
+            f"{'Valid' if is_valid else 'Too Old'}"
+        )
 
         # Ok, now the proper comparison.
-        if initial_outdated_day < post.published_at.replace(tzinfo=pytz.UTC):
+        if is_valid:
             return True
 
         self._logger.debug(

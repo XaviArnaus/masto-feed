@@ -257,7 +257,8 @@ class FeedParser(ParserProtocol):
             self._logger.debug("Getting possible stored data for %s", source)
             self._already_seen[source] = self._feeds_storage.get(f"{source}.urls_seen", [])
             self._logger.debug(
-                f"The source {source} has {len(self._already_seen[source])} seen URLs in our storage"
+                f"The source {source} has " +
+                f"{len(self._already_seen[source])} seen URLs in our storage"
             )
 
         return True if id in self._already_seen[source] else False
