@@ -22,7 +22,7 @@ class JanitorTest(RunnerProtocol):
                 app_name = self._config.get("app.name")
                 Janitor(remote_url).error(
                     message="```This is a test```",
-                    summary=f"Echo bot [{app_name}] test in host: {socket.gethostname()}"
+                    summary=f"Masto-Feed [{app_name}] test in host: {socket.gethostname()}"
                 )
             elif remote_url is None:
                 self._logger.info("The remote URL is None. Set it in the config")

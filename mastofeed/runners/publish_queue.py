@@ -8,7 +8,7 @@ import logging
 
 class QueuePublisher(RunnerProtocol):
     '''
-    Main Runner of the Echo bot
+    Main Runner of the MastoFeed
     '''
 
     def __init__(self, config: Config, logger: logging, params: dict = None) -> None:

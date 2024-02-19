@@ -116,7 +116,9 @@ class Publisher(MastodonPublisher):
                     should_continue = False
 
         if not self._is_dry_run:
-            self._logger.debug(f"Attempting to write {self._queue.length()} items in our storage")
+            self._logger.debug(
+                f"Attempting to write {self._queue.length()} items in our storage"
+            )
             self._queue.save()
 
     def __next_in_queue_matches_group_id(self, group_id: str) -> bool:
