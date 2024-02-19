@@ -45,7 +45,8 @@ class MentionParser:
 
     ERROR_INVALID_ACTION = "I don't understand the action."
     ERROR_INVALID_URL = "The given URL does not seem to be valid. Don't forget the schema."
-    ERROR_INVALID_RSS = "I could not get a valid RSS feed from the given URL. Perhaps it is in a /blog subdirectory?"
+    ERROR_INVALID_RSS = "I could not get a valid RSS feed from the given URL. " +\
+        "Perhaps it is in a /blog subdirectory?"
     ERROR_INVALID_ALIAS = "The alias can only be letters, numbers and hypens"
     ERROR_ALIAS_ALREADY_EXISTS = "The alias is already taken"
     ERROR_NOT_FOUND_ALIAS = "I can't find that Alias in my records"
@@ -55,7 +56,8 @@ class MentionParser:
     INFO_REMOVED = "Removed"
     INFO_HELLO = "I am an RSS Feeder bot. You can use the following commands with me:\n\n" +\
         "add [site-url] [alias] \"name of the feed\" -> Will register a new RSS\n" +\
-        "update [alias] [site-url] \"name of the feed\" -> Will change the URL for an alias\n" +\
+        "update [alias] [site-url] \"name of the feed\" " +\
+        "-> Will change the URL for an alias\n" +\
         "remove [alias] -> Will remove the record\n" +\
         "test [site-url] -> Will test the URL searching for RSSs\n" +\
         "list -> Will show all the records I have"
@@ -126,7 +128,7 @@ class MentionParser:
         self._logger.debug(f"Got an action: {self.action}")
 
         # If we don't have a proper action, mark it and stop here
-        if self.action == None:
+        if self.action is None:
             self.error = self.ERROR_INVALID_ACTION
             return False
 
@@ -271,7 +273,7 @@ class MentionParser:
         elif self.action == MentionAction.TEST:
             if self.complements['site_url'] == self.complements['feed_url']:
                 text = f"The site URL {self.complements['site_url']} appears to be " +\
-                        f"a valid feed itself"
+                        "a valid feed itself"
             else:
                 text = f"The site URL {self.complements['site_url']} appears to have " +\
                         f"a valid feed at {self.complements['feed_url']}"
@@ -468,7 +470,7 @@ class MentionAction:
     def valid_or_none(value: str) -> str:
         try:
             return MentionAction.valid_or_raise(value)
-        except RuntimeError as e:
+        except RuntimeError:
             return None
 
 
