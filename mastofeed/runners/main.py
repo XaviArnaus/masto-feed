@@ -22,9 +22,6 @@ class Main(RunnerProtocol):
     Main Runner of the MastoFeed bot
     '''
 
-    # As this comes from EchoBot, it han candle multiple parsers.
-    #   MastoFeed mocus in Feeds, but I want to keep it multi-module
-    #   just in case.
     PARSERS = {
         "RSS Feed": {
             "module": FeedParser,
@@ -73,6 +70,7 @@ class Main(RunnerProtocol):
             parsers_config = self.prepare_config_for_parsers()
 
             for name, module in parsers.items():
+                self._logger.info(f"{TerminalColor.YELLOW}Processing {name}{TerminalColor.END}")
                 # Instantiate this parser
                 instance = module(config=parsers_config)  # type: ParserProtocol
 
@@ -80,8 +78,7 @@ class Main(RunnerProtocol):
                 for source, parameters in instance.get_sources().items():
 
                     self._logger.info(
-                        f"{TerminalColor.BLUE}Processing source " +\
-                        f"{TerminalColor.YELLOW}{source}{TerminalColor.END}"
+                        f"{TerminalColor.BLUE}Processing source {source}{TerminalColor.END}"
                     )
 
                     # Get all the raw data related to this source
@@ -130,13 +127,9 @@ class Main(RunnerProtocol):
 
                 # Trying to isolate the possible issues between parsers,
                 #   we secure the current queue before we move to the next parser.
-                self._logger.debug(
-                    f"Prepare queue of {self._queue.length()} items to be deduplicated"
-                )
+                self._logger.debug(f"Prepare queue of {self._queue.length()} items to be deduplicated")
                 self._queue.deduplicate()
-                self._logger.debug(
-                    f"Deduplicated. Now {self._queue.length()} items to be sorted"
-                )
+                self._logger.debug(f"Deduplicated. Now {self._queue.length()} items to be sorted")
                 self._queue.sort()
                 self._logger.debug(f"Sorted. Now {self._queue.length()} items to be saved")
                 self._queue.save()
