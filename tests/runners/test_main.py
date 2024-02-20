@@ -85,7 +85,19 @@ def patch_storage_read_file(self):
     self._content = STORAGE
 
 
+def patched_publisher_init(
+    self,
+    config: Config,
+    named_account: str = "default",
+    base_path: str = None,
+    only_oldest: bool = False,
+    queue: Queue = None
+):
+    pass
+
+
 @patch.object(Storage, "read_file", new=patch_storage_read_file)
+@patch.object(Publisher, "__init__", new=patched_publisher_init)
 def get_instance() -> Main:
     config = Config(params=CONFIG)
     logger = getLogger(name=CONFIG["logger"]["name"])
@@ -106,6 +118,7 @@ def test_instantiation():
 
 
 @patch.object(Storage, "read_file", new=patch_storage_read_file)
+@patch.object(Publisher, "__init__", new=patched_publisher_init)
 def test_instance_() -> Main:
     config = Config(params=CONFIG)
     logger = getLogger(name=CONFIG["logger"]["name"])
