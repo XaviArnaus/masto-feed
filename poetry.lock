@@ -516,28 +516,24 @@ files = [
 
 [[package]]
 name = "pyxavi"
-version = "0.7.7"
+version = "0.8.0"
 description = "Set of utilities to assist on simple Python projects"
 category = "main"
 optional = false
-python-versions = "^3.9"
-files = []
-develop = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "pyxavi-0.8.0-py3-none-any.whl", hash = "sha256:1de5e0d713463552489eb44366acd48391af2343b2148cf2e159e6b441da9aef"},
+    {file = "pyxavi-0.8.0.tar.gz", hash = "sha256:151bf752809f3b99a95b49e6b266e5a94f0643a631be43e587f801c08cd093c3"},
+]
 
 [package.dependencies]
-beautifulsoup4 = "^4.11"
-feedparser = "^6.0.10"
+beautifulsoup4 = ">=4.11,<5.0"
+feedparser = ">=6.0.10,<7.0.0"
 "Mastodon.py" = "1.8.1"
-python-slugify = "^7.0.0"
-pyyaml = "^6.0.1"
-requests = "^2.28.0"
-validators = "^0.22.0"
-
-[package.source]
-type = "git"
-url = "https://github.com/XaviArnaus/pyxavi.git"
-reference = "feature/feed-discovery"
-resolved_reference = "e3298e99f5255056eae4e4f5aad99457bac660db"
+python-slugify = ">=7.0.0,<8.0.0"
+pyyaml = ">=6.0.1,<7.0.0"
+requests = ">=2.28.0,<3.0.0"
+validators = ">=0.22.0,<0.23.0"
 
 [[package]]
 name = "pyyaml"
@@ -711,14 +707,14 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "2.2.0"
+version = "2.2.1"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "urllib3-2.2.0-py3-none-any.whl", hash = "sha256:ce3711610ddce217e6d113a2732fafad960a03fd0318c91faa79481e35c11224"},
-    {file = "urllib3-2.2.0.tar.gz", hash = "sha256:051d961ad0c62a94e50ecf1af379c3aba230c66c710493493560c0c223c49f20"},
+    {file = "urllib3-2.2.1-py3-none-any.whl", hash = "sha256:450b20ec296a467077128bff42b73080516e71b56ff59a60a02bef2232c4fa9d"},
+    {file = "urllib3-2.2.1.tar.gz", hash = "sha256:d0570876c61ab9e520d776c38acbbb5b05a776d3f9ff98a5c8fd5162a444cf19"},
 ]
 
 [package.extras]
@@ -765,4 +761,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "8fe412311624ad1ac8f9061aa9b4d106c6dee6466fe8fda1da1036d8dcc1aed7"
+content-hash = "3bee92a4d077cbc60fcc47d642d4a6087855367de330290cd18c4630e084eaf9"

@@ -30,7 +30,6 @@ class Listener(RunnerProtocol):
             mention_listener.load_config(config=self._config)
 
             # Set the listener for the Streaming for User stuff
-            # mastodon_instance.stream_user(mention_listener, run_async=True, reconnect_async=True)
             mastodon_instance.stream_user(mention_listener)
 
         except Exception as e:
