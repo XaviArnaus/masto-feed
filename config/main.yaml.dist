@@ -27,7 +27,7 @@ logger:
     encoding: "UTF-8"
     # [Bool] Do we want to rotate the log files? Only will apply if we log to files
     rotate:
-        active: False
+        active: True
         # [String] When do we rotate. Accepts "S" | "M" | "H" | "D" | "W0"-"W6" | "midnight"
         #   See https://docs.python.org/3/library/logging.handlers.html#timedrotatingfilehandler
         when: "midnight"
