@@ -151,7 +151,7 @@ class Main(RunnerProtocol):
                     app_name = self._config.get("app.name")
                     Janitor(remote_url).error(
                         message="```" + full_stack() + "```",
-                        summary=f"MastoFeed [{app_name}] failed: {e}"
+                        summary=f"MastoFeed Main [{app_name}] failed: {e}"
                     )
 
             self._logger.exception(e)
