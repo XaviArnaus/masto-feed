@@ -94,6 +94,40 @@ will return something like
 ```
 @xavi The registered Feeds are:
 
-[xavi-blog] Esteve Llop blog: https://xavier.arnaus.net/blog/ (https://estevellopbassiner.wixsite.com/estevellop/blog-feed.xml)
-[xkcd] None: https://xkcd.com/ (https://xkcd.com/rss.xml)
+[xavi-blog] Xavi's Blog: https://xavier.arnaus.net/blog/ (https://xavier.arnaus.net/blog.rss)
+[xkcd] xkcd: https://xkcd.com/ (https://xkcd.com/rss.xml)
+```
+
+### 💬 *test* command
+
+This command tests a given *Site URL*, by running all validations and trying to find the *Feed URL* (RSS, Atom, ...) that will be used to gather the content.
+
+for example:
+```
+@feeder test https://xkcd.com
+```
+
+will return something like
+```
+@xavi The site URL https://xkcd.com appears to have a valid feed at https://xkcd.com/rss.xml
+```
+
+When it's an invalid URL:
+```
+@feeder test wrong,net
+```
+
+will return something like
+```
+@xavi The given URL does not seem to be valid. Don't forget the schema.
+```
+
+When the feed URL could not be found:
+```
+@feeder test https://google.com
+```
+
+will return something like
+```
+@xavi I could not get a valid RSS feed from the given URL. Perhaps it is in a /blog subdirectory?
 ```
