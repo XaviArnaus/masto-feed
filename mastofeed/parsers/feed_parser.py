@@ -49,7 +49,7 @@ class FeedParser(ParserProtocol):
         )
         # self._sources = {x["name"]: x for x in self._config.get("feed_parser.sites", [])}
         self._load_sources()
-        self._already_seen = {}  # type: dict[str, list]
+        self._load_already_seen()
 
     def _load_sources(self) -> None:
         # This takes the data from the self._feeds_storage,
@@ -81,6 +81,18 @@ class FeedParser(ParserProtocol):
                     self.FEED_EMULATED_PARAMS["max_summary_length"]
                 ),
             }
+
+    def _load_already_seen(self) -> None:
+
+        self._already_seen = {}  # type: dict[str, list]
+        for source in self._sources.keys():
+            if source not in self._already_seen or self._already_seen[source] is None:
+                self._logger.debug("Getting possible stored data for %s", source)
+                self._already_seen[source] = self._feeds_storage.get(f"{source}.urls_seen", [])
+                self._logger.debug(
+                    f"The source {source} has " +
+                    f"{len(self._already_seen[source])} seen URLs in our storage"
+                )
 
     def format_post_for_source(self, source: str, post: QueuePost) -> None:
 
@@ -252,14 +264,6 @@ class FeedParser(ParserProtocol):
 
     def is_id_already_seen_for_source(self, source: str, id: any) -> bool:
         """Identifies if this ID is already registered in the state"""
-
-        if source not in self._already_seen or self._already_seen[source] is None:
-            self._logger.debug("Getting possible stored data for %s", source)
-            self._already_seen[source] = self._feeds_storage.get(f"{source}.urls_seen", [])
-            self._logger.debug(
-                f"The source {source} has " +
-                f"{len(self._already_seen[source])} seen URLs in our storage"
-            )
 
         return True if id in self._already_seen[source] else False
 
