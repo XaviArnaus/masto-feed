@@ -2,6 +2,7 @@ from pyxavi.config import Config
 from pyxavi.storage import Storage
 from pyxavi.media import Media
 from pyxavi.url import Url
+from pyxavi.terminal_color import TerminalColor
 from mastofeed.parsers.parser_protocol import ParserProtocol
 from mastofeed.lib.queue_post import QueuePost, QueuePostMedia
 from datetime import datetime
@@ -87,11 +88,11 @@ class FeedParser(ParserProtocol):
         self._already_seen = {}  # type: dict[str, list]
         for source in self._sources.keys():
             if source not in self._already_seen or self._already_seen[source] is None:
-                self._logger.debug("Getting possible stored data for %s", source)
                 self._already_seen[source] = self._feeds_storage.get(f"{source}.urls_seen", [])
+                how_many = len(self._already_seen[source])
                 self._logger.debug(
-                    f"The source {source} has " +
-                    f"{len(self._already_seen[source])} seen URLs in our storage"
+                    f"The source {TerminalColor.YELLOW}{source}{TerminalColor.END} has loaded "
+                    + f"{TerminalColor.YELLOW}{how_many}{TerminalColor.END} seen URLs"
                 )
 
     def format_post_for_source(self, source: str, post: QueuePost) -> None:
