@@ -32,7 +32,7 @@ class Listener(RunnerProtocol):
 
             # Set the listener for the Streaming for User stuff
             mastodon_instance.stream_user(mention_listener)
-        
+
         except ReadTimeoutError as e:
             # Yeah, the servers may give a Timeout from time to time.
             #   How important is that?
