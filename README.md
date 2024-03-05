@@ -1,7 +1,7 @@
 # Masto-Feed RSS feed to Mastodon bridge
 RSS feed reader that posts updates in Mastodon API. It also attends to mentions to perform some maintenance actions.
 
-## Features
+## ✅ Features
 
 This bot is made with ❤️ from Düsseldorf and it is designed to read from user defined feeds and publish their posts through a single Mastodon bot account.
 
@@ -57,7 +57,7 @@ When setting up the bot you may want to avoid to publish the queue, while you're
 The bot registers every new content in every run, so that it avoids repeating the actions over the same items. This is useful as some sources mark an old post as new and other bots may re-publish it. 
 As usual this can be turned off and repeat all processing for every content in every run, useful while developing.
 
-## Interacting with the bot
+## ✅ Interacting with the bot
 
 The current implemented commands are. Visit [the commands documentation](./docs/commands.md) to get a full explanation of each one.
 
@@ -84,7 +84,7 @@ This command updates an existing record's parameters. The only parameter that ca
 
 This command deletes an existing record.
 
-## How to install it
+## ✅ How to install it
 
 This bot has 2 main executors: the main one intended to be run by the system's `crontab`, and the streaming listener that should run in the background attending the user's requests in their mentions.
 
