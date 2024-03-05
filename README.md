@@ -59,75 +59,128 @@ As usual this can be turned off and repeat all processing for every content in e
 
 ## Interacting with the bot
 
-These are the currently implemented actions that the bot will understand. In the examples here it is assumed that the mastodon account is `@feeder` and it is called from the same instance, otherwise don't forget to add the feeder's domain like `@feeder@social.arnaus.net`.
+The current implemented commands are. Visit [the commands documentation](./docs/commands.md) to get a full explanation of each one.
 
-### 💬 *hello* command
-
+### 💬 *hello*
 This command is an initial help command that explains itself and enumerates the available commands.
 
-for example:
-```
-@feeder hello
-```
-
-will return something like:
-```
-I am an RSS Feeder bot. You can use the following commands with me:
-
-add [site-url] [alias] "name of the feed" -> Will register a new RSS
-update [alias] [site-url] "name of the feed" -> Will change the URL for an alias
-remove [alias] -> Will remove the record
-test [site-url] -> Will test the URL searching for RSSs
-list -> Will show all the records I have
-```
-
-### 💬 *list* command
+### 💬 *list*
 
 This command lists the feeds currently registered.
 
-for example:
-```
-@feeder list
-```
-
-will return something like
-```
-@xavi The registered Feeds are:
-
-[xavi-blog] Xavi's Blog: https://xavier.arnaus.net/blog/ (https://xavier.arnaus.net/blog.rss)
-[xkcd] xkcd: https://xkcd.com/ (https://xkcd.com/rss.xml)
-```
-
-### 💬 *test* command
+### 💬 *test*
 
 This command tests a given *Site URL*, by running all validations and trying to find the *Feed URL* (RSS, Atom, ...) that will be used to gather the content.
 
-for example:
-```
-@feeder test https://xkcd.com
+### 💬 *add*
+
+This command adds a given *Site URL* into the records, so the content will be gathered and processed.
+
+### 💬 *update*
+
+This command updates an existing record's parameters. The only parameter that can't be changed is the `alias`, at it works as ID. All given values will overwrite the previous ones.
+
+### 💬 *remove*
+
+This command deletes an existing record.
+
+## How to install it
+
+This bot has 2 main executors: the main one intended to be run by the system's `crontab`, and the streaming listener that should run in the background attending the user's requests in their mentions.
+
+It is a bot that is managed by Poetry, so the virtual environment and dependencies are nicely managed.
+
+### 0️⃣ Clone the repository
+
+Open a terminal to the host that will run this bot and clone this repository there. At this point, the bot is not yet versioned so the `main` branch will work.
+
+```bash
+git clone git@github.com:XaviArnaus/masto-feed.git .
 ```
 
-will return something like
-```
-@xavi The site URL https://xkcd.com appears to have a valid feed at https://xkcd.com/rss.xml
+### 1️⃣ Install Poetry
+
+In the terminal to the host, install Poetry through the official installer
+
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
 ```
 
-When it's an invalid URL:
-```
-@feeder test wrong,net
+Keep in mind that Poetry needs `python`, and this is actually a `Python 3` program. Alternativelly you can install Poetry with other strategies, just visit the [Poetry official documentation](https://python-poetry.org/docs/)
+
+### 2️⃣ Initialise the project with Poetry
+
+Now that we have Poetry and the bot's code, let's generate the Python's virtual environment and install the dependencies. 
+Make sure that you're in the cloned project's directory and run:
+
+```bash
+poetry install
 ```
 
-will return something like
-```
-@xavi The given URL does not seem to be valid. Don't forget the schema.
+### 3️⃣ Set up the Fediverse account for the bot
+
+This bot is meant to use a Fediverse account to publish the posts it discovers through the RSS feeds. This mean that you need to have an account set up for accessing it programatically.
+
+For a Mastodon account, you need to go to your *Preferences* > *Development* and create a *New application*. It will generate a set of hashes.
+
+### 4️⃣ Set up the bot configuration
+
+The bot is set up by parameters in the config files. These config files live in the `config` directory. You only need to rename every `*.yaml.dist` file to `*.yaml`, edit it and configure the parameters inside.
+
+The config files we have now are:
+- [`main.yaml`](./config/main.yaml.dist): The main configuration file. It contains the Application main info, the Logging configuration, the Janitor connection set up, the queue file definition and the publisher configuration.
+- [`mastodon.yaml`](./config/mastodon.yaml.dist): The mastodon configuration file. This bot understands profiles, so we have here the *default* profile and the *test* profile, that will be used for testing purposes.
+- [`feed_parser.yaml`](./config/feed_parser.yaml.dist): The overarching configuration for the feeds to be parsed. At this point the feeds are not really configurable independently and use this configuration globally. In future versions this will be more coherent.
+
+### 5️⃣ Start the listener
+
+This bot is listening for the mentions that the configured fediverse account receives. In the configuration we set up the credentials so the bridge is created, we only need to start the background program that will behave with the mentions.
+
+This bot has a command line application to manage all of this. Once you're placed at the root of the cloned project, you can run the following command:
+
+```bash
+bin/mastofeed streaming start
 ```
 
-When the feed URL could not be found:
-```
-@feeder test https://google.com
+and it will start a background process that runs the streaming listener. That's all.
+
+### 6️⃣ Running the bot by the `crontab`
+
+A part from the "always running" listener in the previous point, the bot needs to run periodically to perform the tasks of gathering the possible new content and publish it through the Fediverse account. The easiest way is to set it up inside the crontab.
+
+Open the `crontab` with your favourite editor:
+
+```bash
+crontab -e
 ```
 
-will return something like
+... and add a line to run the cron, configuring also its schedule. for example:
 ```
-@xavi I could not get a valid RSS feed from the given URL. Perhaps it is in a /blog subdirectory?
+12,27,43,57 * * * * cd /home/xavier/bots/social-arnaus-feeder && PATH=$PATH:/home/xavier/.local/bin bin/mastofeed feed run
+```
+
+Let's explain it per parts:
+- `12,27,43,57 * * * *`: This is setting up the periodicity of the bot to run. Here it says "every day, every hour, at minutes 12, 27, 43 and 57.
+- `cd /home/user/bots/masto-feed && PATH=$PATH:/home/user/.local/bin bin/mastofeed feed run`: This is literally: first move yourself to the directory `/home/user/bots/masto-feed`. Then with the PATH `$PATH:/home/user/.local/bin` please run the command `bin/mastofeed feed run`. This is done like this because when running commands in `crontab` the PATH is not carried on in the environment variables, so Poetry is usually not found and the run may fail.
+
+### 🆒 And that's it!
+
+At thi point we should have the bot running periodically, and the listener ready to get mentions and behave!
+
+We can monitor the running of the bot by checking the logs that it produces:
+
+```bash
+tail -f log/masto-feed.log
+```
+
+The streaming listener also produces logs whenever a mention comes and also with any issue it may happen:
+
+```bash
+tail -f log/listen_in_background.log
+```
+
+I also recommend to check the possible commands that the CLI has, that helps to debug issues and ensure that the parameters are well set up:
+
+```bash
+bin/mastofeed commands
 ```
