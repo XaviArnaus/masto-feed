@@ -5,18 +5,18 @@ RSS feed reader that posts updates in Mastodon API. It also attends to mentions 
 
 This bot is made with ❤️ from Düsseldorf and it is designed to read from user defined feeds and publish their posts through a single Mastodon bot account.
 
-* **[Super detailed setup via a config files](#--configuration-files)**: Take full control of the execution
-* **[No DB is needed](#--no-db-is-needed)**: Everything is done with files
-* **[Interact with the bot](#--interact-with-the-bot)**: The bot understands mentions with actions
-* **[Feed URL discovery](#--feed-url-discovery)**: The bot will discover the *Feed URL* from the given *Site URL*
-* **[Anti-flood publishing](#--anti-flood-publishing-be-kind)**: [Optional] Publish one post in every run from the queue
-* **[Images supported](#--images-support)**: Also publish the images that come with the original post.
-* **[Exhaustive logging](#--exhaustive-logging)**: Log everything that is happening in the run, so you can monitor what's going on
-* **[Dry Run support](#--dry-run)**: You can set it up and run it without any actual publishing until you're happy with the result
-* **[Keep track of what is already captured](#--keep-track-of-what-is-already-captured)**: To avoid repeating published posts!
+* **[Super detailed setup via a config files](#%EF%B8%8F--configuration-files)**: Take full control of the execution
+* **[No DB is needed](#%EF%B8%8F--no-db-is-needed)**: Everything is done with files
+* **[Interact with the bot](#%EF%B8%8F--interact-with-the-bot)**: The bot understands mentions with actions
+* **[Feed URL discovery](#%EF%B8%8F--feed-url-discovery)**: The bot will discover the *Feed URL* from the given *Site URL*
+* **[Anti-flood publishing](#%EF%B8%8F--anti-flood-publishing-be-kind)**: [Optional] Publish one post in every run from the queue
+* **[Images supported](#%EF%B8%8F--images-support)**: Also publish the images that come with the original post.
+* **[Exhaustive logging](#%EF%B8%8F--exhaustive-logging)**: Log everything that is happening in the run, so you can monitor what's going on
+* **[Dry Run support](#%EF%B8%8F--dry-run)**: You can set it up and run it without any actual publishing until you're happy with the result
+* **[Keep track of what is already captured](#%EF%B8%8F--keep-track-of-what-is-already-captured)**: To avoid repeating published posts!
 
 ### ⭐️  Configuration Files
-A set of Yaml files in [the ´config´ directory](./config/) allows you to configure all possible options. All parameters come largely commented for easy understanding
+A set of Yaml files in [the `config` directory](./config/) allows you to configure all possible options. All parameters come largely commented for easy understanding
 
 Make sure you create your execution copy from them before you run the bot. For example, for the [main config file](./config/main.yaml.dist), run the following in the terminal from the repository's root directory:
 
