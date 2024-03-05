@@ -85,15 +85,15 @@ class FeedParser(ParserProtocol):
 
     def _load_already_seen(self) -> None:
 
+        self._logger.debug("Loading already seen URLs")
         self._already_seen = {}  # type: dict[str, list]
         for source in self._sources.keys():
-            if source not in self._already_seen or self._already_seen[source] is None:
-                self._already_seen[source] = self._feeds_storage.get(f"{source}.urls_seen", [])
-                how_many = len(self._already_seen[source])
-                self._logger.debug(
-                    f"The source {TerminalColor.YELLOW}{source}{TerminalColor.END} has loaded "
-                    + f"{TerminalColor.YELLOW}{how_many}{TerminalColor.END} seen URLs"
-                )
+            self._already_seen[source] = self._feeds_storage.get(f"{source}.urls_seen", [])
+            how_many = len(self._already_seen[source])
+            self._logger.debug(
+                f"{TerminalColor.YELLOW}{source}{TerminalColor.END} has "
+                + f"{TerminalColor.YELLOW}{how_many}{TerminalColor.END} already seen URLs"
+            )
 
     def format_post_for_source(self, source: str, post: QueuePost) -> None:
 
@@ -272,7 +272,10 @@ class FeedParser(ParserProtocol):
         """Performs the saving of the seen state"""
 
         if len(list_of_ids) == 0:
-            self._logger.debug(f"{source} has {len(list_of_ids)} new seen URLs. Skipping.")
+            self._logger.debug(
+                f"{TerminalColor.YELLOW}{source}{TerminalColor.END} has " +
+                f"{len(list_of_ids)} new seen URLs. Skipping re-writting them."
+            )
             return
 
         self._logger.debug(f"Adding {len(list_of_ids)} seen URLs to {source}")
