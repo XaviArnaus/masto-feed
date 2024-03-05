@@ -270,6 +270,10 @@ class FeedParser(ParserProtocol):
     def set_ids_as_seen_for_source(self, source: str, list_of_ids: list) -> None:
         """Performs the saving of the seen state"""
 
+        if len(list_of_ids) == 0:
+            self._logger.debug(f"{source} has {len(list_of_ids)} new seen URLs. Skipping.")
+            return
+
         self._logger.debug(f"Adding {len(list_of_ids)} seen URLs to {source}")
         for new_url in list_of_ids:
             self._already_seen[source].append(new_url)
