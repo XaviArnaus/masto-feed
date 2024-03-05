@@ -147,7 +147,7 @@ class Main(RunnerProtocol):
         except Exception as e:
             self._notify_through_janitor(e)
             self._logger.exception(e)
-        
+
     def _notify_through_janitor(self, e):
         is_janitor_active = self._config.get("janitor.active", False)
         is_dry_run = self._config.get("publisher.dry_run", True)
