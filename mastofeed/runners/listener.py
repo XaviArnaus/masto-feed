@@ -38,8 +38,8 @@ class Listener(RunnerProtocol):
                 if remote_url is not None and not self._config.get("publisher.dry_run"):
                     app_name = self._config.get("app.name")
                     Janitor(remote_url).error(
-                        message="```" + full_stack() + "```",
-                        summary=f"Echo bot [{app_name}] failed: {e}"
+                        message="```\n" + full_stack() + "\n```",
+                        summary=f"MastoFeed Listener [{app_name}] failed: {e}"
                     )
 
             self._logger.exception(e)

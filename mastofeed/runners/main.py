@@ -150,8 +150,8 @@ class Main(RunnerProtocol):
                 if remote_url is not None and not self._config.get("publisher.dry_run"):
                     app_name = self._config.get("app.name")
                     Janitor(remote_url).error(
-                        message="```" + full_stack() + "```",
-                        summary=f"MastoFeed [{app_name}] failed: {e}"
+                        message="```\n" + full_stack() + "\n```",
+                        summary=f"MastoFeed Main [{app_name}] failed: {e}"
                     )
 
             self._logger.exception(e)
