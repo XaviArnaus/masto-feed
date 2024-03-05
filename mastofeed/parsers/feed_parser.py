@@ -91,8 +91,8 @@ class FeedParser(ParserProtocol):
             self._already_seen[source] = self._feeds_storage.get(f"{source}.urls_seen", [])
             how_many = len(self._already_seen[source])
             self._logger.debug(
-                f"{TerminalColor.YELLOW}{source}{TerminalColor.END} has "
-                + f"{TerminalColor.YELLOW}{how_many}{TerminalColor.END} already seen URLs"
+                f"{TerminalColor.YELLOW}{source}{TerminalColor.END} has " +
+                f"{TerminalColor.YELLOW}{how_many}{TerminalColor.END} already seen URLs"
             )
 
     def format_post_for_source(self, source: str, post: QueuePost) -> None:
