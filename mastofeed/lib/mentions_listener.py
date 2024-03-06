@@ -10,7 +10,6 @@ from definitions import ROOT_DIR
 from slugify import slugify
 from bs4 import BeautifulSoup as bs4
 import re
-from pyxavi.debugger import dd
 
 
 class MentionsListener(StreamListener):
@@ -109,7 +108,7 @@ class MentionParser:
         # Removing the self username from the mention, so we have a clean string to parse
         username_position, content = self.remove_self_username_from_content(content=content)
 
-        # If the username was NOT in the very beginning, we assume that this is an organic mention,
+        # If the username was NOT in the beginning, we assume that this is an organic mention,
         #   meaning that it does not contain a command. Let's be polite and say Hi!
         if username_position > 0:
             self.error = self.ERROR_NO_COMMAND
