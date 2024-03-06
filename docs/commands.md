@@ -92,6 +92,16 @@ will return something like
 @xavi I could not get a valid RSS feed from the given URL. Perhaps it is in a /blog subdirectory?
 ```
 
+🔴 When the URL is missing:
+```
+@feeder test
+```
+
+will return something like
+```
+@xavi Seems like you forgot parameters
+```
+
 ### 💬 *add* command
 
 This command adds a given *Site URL* into the records, so the content will be gathered and processed.
@@ -179,6 +189,16 @@ will return something like
 @xavi The alias is already taken
 ```
 
+🔴 When the parameters are missing:
+```
+@feeder add
+```
+
+will return something like
+```
+@xavi Seems like you forgot parameters
+```
+
 ### 💬 *update* command
 This command updates an existing record's parameters. The only parameter that can't be changed is the `alias`, at it works as ID. All given values will overwrite the previous ones.
 
@@ -250,6 +270,16 @@ will return something like
 @xavi I can't find that Alias in my records
 ```
 
+🔴 When the parameters are missing:
+```
+@feeder update
+```
+
+will return something like
+```
+@xavi Seems like you forgot parameters
+```
+
 ### 💬 *remove* command
 
 This command deletes an existing record.
@@ -280,4 +310,14 @@ will return something like
 will return something like
 ```
 @xavi I can't find that Alias in my records
+```
+
+🔴 When the alias is missing:
+```
+@feeder remove
+```
+
+will return something like
+```
+@xavi Seems like you forgot parameters
 ```
