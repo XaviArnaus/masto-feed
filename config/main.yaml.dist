@@ -8,6 +8,10 @@ app:
   name: "MastoFeed"
   # User used for publishing (with domain, in a @user@domain.tld pattern)
   user: "@feeder@social.arnaus.net"
+  # [String] User that behaves as Admin (can ADD, UPDATE and REMOVE)
+  admin: "@xavi@social.arnaus.net"
+  # [Bool] Restrict write operations to admin only?
+  restrict_writes: True
 
 # Logging config
 logger:

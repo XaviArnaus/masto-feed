@@ -66,7 +66,7 @@ class MentionParser:
     INFO_LIST_HEADER = "The registered Feeds are:\n\n"
 
     DEFAULT_STORAGE_FILE = "storage/feeds.yaml"
-    REGEXP_TEXT_WITHIN_QUOTES = r'"([\w+_\./\\\'\s\-]*)"'
+    REGEXP_TEXT_WITHIN_QUOTES = r'"([\w+_\./\\\'\’\`\s\-]*)"'
 
     mention: Mention = None
     action: MentionAction = None
@@ -450,7 +450,9 @@ class MentionParser:
         return alias == slugify(alias)
 
     def small_user(self, username) -> str:
-        return f"@{username.split('@')[1]}"
+        # Generalising having the username with or without the @ in front
+        username = username.lstrip("@")
+        return f"@{username.split('@')[0]}"
 
     def user_can_write(self) -> str:
         return self._restrict_writes and (
