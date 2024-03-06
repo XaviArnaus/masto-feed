@@ -4,7 +4,7 @@ from pyxavi.queue_stack import Queue
 from mastofeed.lib.publisher import Publisher
 from mastofeed.lib.mentions_listener import MentionParser, Mention
 from pyxavi.mastodon_helper import StatusPostVisibility
-from logging import Logger as BuiltInLogger, getLogger
+from logging import Logger as BuiltInLogger
 from unittest.mock import patch
 import copy
 import pytest
@@ -74,26 +74,28 @@ def test_instantiation():
     assert isinstance(instance._logger, BuiltInLogger)
     assert isinstance(instance._publisher, Publisher)
 
+
 def test_format_answer():
 
     instance = get_mention_parser()
-    mention = Mention.from_dict({
-        "status_id": 123,
-        "content": f"{instance.me} this is a meaningless test",
-        "username": "xavi@social.arnaus.net",
-        "visibility": StatusPostVisibility.PUBLIC
-    })
+    mention = Mention.from_dict(
+        {
+            "status_id": 123,
+            "content": f"{instance.me} this is a meaningless test",
+            "username": "xavi@social.arnaus.net",
+            "visibility": StatusPostVisibility.PUBLIC
+        }
+    )
     instance.mention = mention
     text = "I am a text"
-    
+
     assert f"@{mention.username} {text}" == instance._format_answer(text)
+
 
 @pytest.mark.parametrize(
     argnames=('alias', 'expected_result'),
     argvalues=[
-        ("example", True),
-        ("not working", False),
-        ("https-social-arnaus-net", True),
+        ("example", True), ("not working", False), ("https-social-arnaus-net", True),
         ("https://social.arnaus.net", False)
     ],
 )
@@ -103,13 +105,12 @@ def test_is_alias_valid(alias, expected_result):
 
     assert instance.is_alias_valid(alias) is expected_result
 
+
 @pytest.mark.parametrize(
     argnames=('username', 'expected_small'),
     argvalues=[
-        ("@xavi@social.arnaus.net", "@xavi"),
-        ("xavi@social.arnaus.net", "@xavi"),
-        ("@xavi", "@xavi"),
-        ("xavi", "@xavi")
+        ("@xavi@social.arnaus.net", "@xavi"), ("xavi@social.arnaus.net", "@xavi"),
+        ("@xavi", "@xavi"), ("xavi", "@xavi")
     ],
 )
 def test_small_user(username, expected_small):
@@ -118,27 +119,29 @@ def test_small_user(username, expected_small):
 
     assert instance.small_user(username) == expected_small
 
+
 @pytest.mark.parametrize(
     argnames=('username', 'expected_result'),
     argvalues=[
-        ("xavi@social.arnaus.net", True),
-        ("pepe@social.arnaus.net", False),
-        ("xavi", True),
+        ("xavi@social.arnaus.net", True), ("pepe@social.arnaus.net", False), ("xavi", True),
         ("pepe", False)
     ],
 )
 def test_user_can_write(username, expected_result):
 
     instance = get_mention_parser()
-    mention = Mention.from_dict({
-        "status_id": 123,
-        "content": f"{instance.me} this is a meaningless test",
-        "username": username,
-        "visibility": StatusPostVisibility.PUBLIC
-    })
+    mention = Mention.from_dict(
+        {
+            "status_id": 123,
+            "content": f"{instance.me} this is a meaningless test",
+            "username": username,
+            "visibility": StatusPostVisibility.PUBLIC
+        }
+    )
     instance.mention = mention
 
     assert instance.user_can_write() == expected_result
+
 
 @pytest.mark.parametrize(
     argnames=('content', 'expected_result'),
