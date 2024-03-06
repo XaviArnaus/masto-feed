@@ -33,14 +33,14 @@ class Listener(RunnerProtocol):
             # Set the listener for the Streaming for User stuff
             mastodon_instance.stream_user(mention_listener)
 
-        # except ReadTimeoutError as e:
-        #     # Yeah, the servers may give a Timeout from time to time.
-        #     #   How important is that?
-        #     self._notify_through_janitor(e)
-        #     # Log the error in a smaller way
-        #     self._logger.error(f"Server Timeout: {e}")
-        #     # Let's try an infinite loop
-        #     self.run()
+        except ReadTimeoutError as e:
+            # Yeah, the servers may give a Timeout from time to time.
+            #   How important is that?
+            self._notify_through_janitor(e)
+            # Log the error in a smaller way
+            self._logger.error(f"Server Timeout: {e}")
+            # Let's try an infinite loop
+            self.run()
 
         except Exception as e:
             self._notify_through_janitor(e)
