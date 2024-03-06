@@ -105,7 +105,7 @@ class MentionParser:
 
         # Before anything, remove the HTML stuff
         content = bs4(self.mention.content, features="html.parser").get_text()
-        
+
         # Removing the self username from the mention, so we have a clean string to parse
         username_position, content = self.remove_self_username_from_content(content=content)
 
@@ -466,7 +466,7 @@ class MentionParser:
         else:
 
             return m.group(1)
-    
+
     def remove_self_username_from_content(self, content: str):
         """
         Removes the self username from the content.
@@ -484,7 +484,7 @@ class MentionParser:
             content = content.replace(self.me, "")
             # Now return the position it was found
             return username_position, content
-        
+
         # Still here? Let's try now with the small version of the username
         small_me = self.small_user(self.me)
         username_position = content.find(small_me)
@@ -495,7 +495,7 @@ class MentionParser:
             content = content.replace(small_me, "")
             # Now return the position it was found
             return username_position, content
-        
+
         # Cannot be that you're already here! Then return something unexpected
         return -1, content
 
