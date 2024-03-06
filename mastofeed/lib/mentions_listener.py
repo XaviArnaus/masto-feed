@@ -51,6 +51,8 @@ class MentionParser:
     ERROR_ALIAS_ALREADY_EXISTS = "The alias is already taken"
     ERROR_NOT_FOUND_ALIAS = "I can't find that Alias in my records"
     ERROR_NOT_ALLOWED = "You're not allowed to Create, Update or Remove records."
+    ERROR_NO_COMMAND = "hi! 👋🏼"
+    ERROR_MISSING_PARAMS = "Seems like you forgot parameters"
     INFO_ADDED = "Added"
     INFO_UPDATED = "Updated"
     INFO_REMOVED = "Removed"
@@ -103,12 +105,14 @@ class MentionParser:
         # Before anything, remove the HTML stuff
         content = bs4(self.mention.content, features="html.parser").get_text()
 
-        # First, remove ourself from the mention
-        content = content.replace(self.me, "")
+        # Removing the self username from the mention, so we have a clean string to parse
+        username_position, content = self.remove_self_username_from_content(content=content)
 
-        # Wait, let's try the same without the domain in the user
-        small_me = self.small_user(self.me)
-        content = content.replace(small_me, "")
+        # If the username was NOT in the beginning, we assume that this is an organic mention,
+        #   meaning that it does not contain a command. Let's be polite and say Hi!
+        if username_position > 0:
+            self.error = self.ERROR_NO_COMMAND
+            return False
 
         # ... and trim spaces
         content = content.strip()
@@ -129,6 +133,7 @@ class MentionParser:
 
         # If we don't have a proper action, mark it and stop here
         if self.action is None:
+            self._logger.debug("No action, then complaining")
             self.error = self.ERROR_INVALID_ACTION
             return False
 
@@ -146,8 +151,10 @@ class MentionParser:
             # Let's prepare the answer with the error
             #   We add the HELLO in case of unknown action only
             if self.error == self.ERROR_INVALID_ACTION:
+                self._logger.debug("Error: Invalid action")
                 text = f"{self.error}\n\n{self.INFO_HELLO}"
             else:
+                self._logger.debug(f"Error: General: {self.error}")
                 text = self.error
             self.answer = StatusPost.from_dict(
                 {
@@ -160,7 +167,7 @@ class MentionParser:
 
         # So, let's answer according to the action
         elif self.action == MentionAction.HELLO:
-
+            self._logger.debug("Action HELLO")
             self.answer = StatusPost.from_dict(
                 {
                     "status": self._format_answer(self.INFO_HELLO),
@@ -171,7 +178,9 @@ class MentionParser:
             return True
 
         elif self.action == MentionAction.ADD:
+            self._logger.debug("Action ADD")
             if not self.user_can_write():
+                self._logger.debug("not allowed to write write")
                 self.answer = StatusPost.from_dict(
                     {
                         "status": self._format_answer(self.ERROR_NOT_ALLOWED),
@@ -200,7 +209,9 @@ class MentionParser:
             return True
 
         elif self.action == MentionAction.UPDATE:
+            self._logger.debug("Action UPDATE")
             if not self.user_can_write():
+                self._logger.debug("not allowed to write write")
                 self.answer = StatusPost.from_dict(
                     {
                         "status": self._format_answer(self.ERROR_NOT_ALLOWED),
@@ -229,7 +240,9 @@ class MentionParser:
             return True
 
         elif self.action == MentionAction.REMOVE:
+            self._logger.debug("Action REMOVE")
             if not self.user_can_write():
+                self._logger.debug("not allowed to write write")
                 self.answer = StatusPost.from_dict(
                     {
                         "status": self._format_answer(self.ERROR_NOT_ALLOWED),
@@ -251,6 +264,7 @@ class MentionParser:
             return True
 
         elif self.action == MentionAction.LIST:
+            self._logger.debug("Action LIST")
             aliases = self._feeds_storage.get_all()
             if len(aliases) > 0:
                 registers = [
@@ -271,6 +285,7 @@ class MentionParser:
             return True
 
         elif self.action == MentionAction.TEST:
+            self._logger.debug("Action TEST")
             if self.complements['site_url'] == self.complements['feed_url']:
                 text = f"The site URL {self.complements['site_url']} appears to be " +\
                         "a valid feed itself"
@@ -296,20 +311,20 @@ class MentionParser:
 
         return f"@{self.mention.username} {text}"
 
-    def parse_complements(self, words: list, quoted_text: str = None) -> None:
+    def parse_complements(self, words: list, quoted_text: str = None) -> bool:
 
         self._logger.debug("Parsing complements")
 
-        # If no complements, no parsing
-        if len(words) == 0:
-            return True
-
         # So let's check the given complements as per every action needs.
-        elif self.action == MentionAction.HELLO:
+        if self.action == MentionAction.HELLO:
             # It does not need complements.
             return True
 
         elif self.action == MentionAction.ADD:
+            # Do we have actually words to parse?
+            if len(words) == 0:
+                self.error = self.ERROR_MISSING_PARAMS
+                return False
             # First word needs to be a valid URL
             first_word = words.pop(0)
             if not Url.is_valid(first_word):
@@ -353,6 +368,10 @@ class MentionParser:
             return True
 
         elif self.action == MentionAction.UPDATE:
+            # Do we have actually words to parse?
+            if len(words) == 0:
+                self.error = self.ERROR_MISSING_PARAMS
+                return False
             # First word needs to be an alias
             first_word = words.pop(0)
             if not self._feeds_storage.key_exists(first_word):
@@ -385,6 +404,10 @@ class MentionParser:
             return True
 
         elif self.action == MentionAction.REMOVE:
+            # Do we have actually words to parse?
+            if len(words) == 0:
+                self.error = self.ERROR_MISSING_PARAMS
+                return False
             # First word needs to be an alias
             first_word = words.pop(0)
             if not self._feeds_storage.key_exists(first_word):
@@ -399,6 +422,10 @@ class MentionParser:
             return True
 
         elif self.action == MentionAction.TEST:
+            # Do we have actually words to parse?
+            if len(words) == 0:
+                self.error = self.ERROR_MISSING_PARAMS
+                return False
             # First word needs to be a valid URL
             first_word = words.pop(0)
             if not Url.is_valid(first_word):
@@ -438,6 +465,38 @@ class MentionParser:
         else:
 
             return m.group(1)
+
+    def remove_self_username_from_content(self, content: str):
+        """
+        Removes the self username from the content.
+        """
+
+        # This is a mention. There has to be ALWAYS the self username anywhere in the content.
+        #   The username is expressed as short @feeder or long @feeder@social.arnaus.net.
+        #   Let's start with the long one, as it's the one we have without calculations.
+
+        username_position = content.find(self.me)
+
+        # We get a non -1 integer, meaning that the username is there
+        if username_position >= 0:
+            # Remove the username from the content
+            content = content.replace(self.me, "")
+            # Now return the position it was found
+            return username_position, content
+
+        # Still here? Let's try now with the small version of the username
+        small_me = self.small_user(self.me)
+        username_position = content.find(small_me)
+
+        # We get a non -1 integer, meaning that the username is there
+        if username_position >= 0:
+            # Remove the username from the content
+            content = content.replace(small_me, "")
+            # Now return the position it was found
+            return username_position, content
+
+        # Cannot be that you're already here! Then return something unexpected
+        return -1, content
 
 
 class MentionAction:
