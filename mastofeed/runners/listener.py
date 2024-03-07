@@ -7,7 +7,7 @@ from mastofeed.lib.mentions_listener import MentionsListener
 from mastofeed.runners.runner_protocol import RunnerProtocol
 from definitions import ROOT_DIR
 import logging
-from urllib3.exceptions import ReadTimeoutError
+from mastodon.Mastodon import MastodonReadTimeout
 
 
 class Listener(RunnerProtocol):
@@ -33,7 +33,7 @@ class Listener(RunnerProtocol):
             # Set the listener for the Streaming for User stuff
             mastodon_instance.stream_user(mention_listener)
 
-        except ReadTimeoutError as e:
+        except MastodonReadTimeout as e:
             # Yeah, the servers may give a Timeout from time to time.
             #   How important is that?
             self._notify_through_janitor(e)
