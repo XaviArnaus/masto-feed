@@ -206,7 +206,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
                 "name": "Xavi's blog"
             },
             None,  # No error
-            True,  # Parse returns true
+            True,  # return for parse()
             False,  # The site_url is not a valid feed itself
             ["https://xavier.arnaus.net/blog.rss", "https://xavier.arnaus.net/blog.atom"],
             "@xavi@social.arnaus.net"  # Who is actually mentioning
@@ -217,7 +217,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             MentionAction.LIST,
             {},  # No complements
             None,  # No error
-            True,  # Parse returns true
+            True,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
             "@xavi@social.arnaus.net"  # Who is actually mentioning
@@ -228,7 +228,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             None,  # No action
             {},  # No complements
             MentionParser.ERROR_INVALID_ACTION,  # No action error
-            False,  # Parse returns false
+            False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
             "@xavi@social.arnaus.net"  # Who is actually mentioning
@@ -239,7 +239,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             None,  # No action
             {},  # No complements
             MentionParser.ERROR_NO_COMMAND,  # No command error
-            False,  # Parse returns false
+            False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
             "@xavi@social.arnaus.net"  # Who is actually mentioning
@@ -250,8 +250,198 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             None,  # No action
             {},  # No complements
             MentionParser.ERROR_NO_COMMAND,  # No command error
-            False,  # Parse returns false
+            False,  # return for parse()
             False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # The first word after the non-organic mention is not an action
+        (
+            "@feeder caca",
+            None,  # No action
+            {},  # No complements
+            MentionParser.ERROR_INVALID_ACTION,  # No action error
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action HELLO, nice and clean
+        (
+            "@feeder hello",
+            MentionAction.HELLO,  # hello
+            {},  # No complements
+            None,  # No error
+            True,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action HELLO, whatever comes after the action is ignored
+        (
+            "@feeder hello everybody",
+            MentionAction.HELLO,  # hello
+            {},  # No complements
+            None,  # No error
+            True,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action LIST, nice and clean
+        (
+            "@feeder list",
+            MentionAction.LIST,  # list
+            {},  # No complements
+            None,  # No error
+            True,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action LIST, whatever comes after the action is ignored
+        (
+            "@feeder list me everything you have",
+            MentionAction.LIST,  # list
+            {},  # No complements
+            None,  # No error
+            True,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action ADD, missing parameters
+        (
+            "@feeder add",
+            MentionAction.ADD,  # add
+            {},  # No complements
+            MentionParser.ERROR_MISSING_PARAMS,
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action ADD, the site URL is invalid. The schema is mandatory
+        (
+            "@feeder add xavi.com",
+            MentionAction.ADD,  # add
+            {},  # No complements
+            MentionParser.ERROR_INVALID_URL,
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action ADD, the site URL is invalid. Random 1
+        (
+            "@feeder add http://xavi,com",
+            MentionAction.ADD,  # add
+            {},  # No complements
+            MentionParser.ERROR_INVALID_URL,
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action ADD, the site URL is also the feed URL
+        (
+            "@feeder add https://xavier.arnaus.net/blog.rss",
+            MentionAction.ADD,  # add
+            {
+                "alias": "https-xavier-arnaus-net-blog-rss",
+                "site_url": "https://xavier.arnaus.net/blog.rss",
+                "feed_url": "https://xavier.arnaus.net/blog.rss",
+                "name": None
+            },
+            None,
+            True,  # return for parse()
+            True,  # The site_url is a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action ADD, the feed URL is discovered, taking the first item
+        (
+            "@feeder add https://xavier.arnaus.net/blog",
+            MentionAction.ADD,  # add
+            {
+                "alias": "https-xavier-arnaus-net-blog-rss",
+                "site_url": "https://xavier.arnaus.net/blog",
+                "feed_url": "https://xavier.arnaus.net/blog.rss",
+                "name": None
+            },
+            None,
+            True,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            ["https://xavier.arnaus.net/blog.rss", "https://xavier.arnaus.net/blog.atom"],
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action ADD, the site URL is also the feed URL. Defining alias.
+        (
+            "@feeder add https://xavier.arnaus.net/blog.rss xavi",
+            MentionAction.ADD,  # add
+            {
+                "alias": "xavi",
+                "site_url": "https://xavier.arnaus.net/blog.rss",
+                "feed_url": "https://xavier.arnaus.net/blog.rss",
+                "name": None
+            },
+            None,
+            True,  # return for parse()
+            True,  # The site_url is a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action ADD, the site URL is also the feed URL. Defining invalid alias.
+        (
+            "@feeder add https://xavier.arnaus.net/blog.rss xavi's",
+            MentionAction.ADD,  # add
+            {},  # when error, there are no complements
+            MentionParser.ERROR_INVALID_ALIAS,
+            False,  # return for parse()
+            True,  # The site_url is a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action ADD, the site URL is also the feed URL. Defining existing alias.
+        (
+            "@feeder add https://xavier.arnaus.net/blog.rss existing-key",
+            MentionAction.ADD,  # add
+            {},  # when error, there are no complements
+            MentionParser.ERROR_ALIAS_ALREADY_EXISTS,
+            False,  # return for parse()
+            True,  # The site_url is a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action ADD, the site URL is also the feed URL. Defining name.
+        (
+            "@feeder add https://xavier.arnaus.net/blog.rss \"Xavi's blog\"",
+            MentionAction.ADD,  # add
+            {
+                "alias": "https-xavier-arnaus-net-blog-rss",
+                "site_url": "https://xavier.arnaus.net/blog.rss",
+                "feed_url": "https://xavier.arnaus.net/blog.rss",
+                "name": "Xavi's blog"
+            },
+            None,
+            True,  # return for parse()
+            True,  # The site_url is a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action ADD, the site URL is also the feed URL. Defining alias and name.
+        (
+            "@feeder add https://xavier.arnaus.net/blog.rss xavi \"Xavi's blog\"",
+            MentionAction.ADD,  # add
+            {
+                "alias": "xavi",
+                "site_url": "https://xavier.arnaus.net/blog.rss",
+                "feed_url": "https://xavier.arnaus.net/blog.rss",
+                "name": "Xavi's blog"
+            },
+            None,
+            True,  # return for parse()
+            True,  # The site_url is a valid feed itself
             [],  # No Feeds found
             "@xavi@social.arnaus.net"  # Who is actually mentioning
         ),
@@ -279,6 +469,7 @@ def test_parse(
         }
     )
     instance.mention = mention
+    instance._feeds_storage.set("existing-key", {})
 
     # Mock the external calls and trigger the parse
     mocked_url_findfeeds = Mock()
