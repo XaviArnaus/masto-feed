@@ -39,6 +39,9 @@ markers = ["slow"]
 pythonpath = [
   "."
 ]
+filterwarnings = [
+  "ignore::bs4.MarkupResemblesLocatorWarning"
+]
 
 [tool.yapf]
 column_limit = 96

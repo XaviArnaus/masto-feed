@@ -8,7 +8,7 @@ from pyxavi.url import Url
 from mastofeed.lib.publisher import Publisher
 from definitions import ROOT_DIR
 from slugify import slugify
-from bs4 import BeautifulSoup as bs4
+from bs4 import BeautifulSoup
 import re
 
 
@@ -66,7 +66,7 @@ class MentionParser:
     INFO_LIST_HEADER = "The registered Feeds are:\n\n"
 
     DEFAULT_STORAGE_FILE = "storage/feeds.yaml"
-    REGEXP_TEXT_WITHIN_QUOTES = r'"([\w+_\./\\\'\s\-]*)"'
+    REGEXP_TEXT_WITHIN_QUOTES = r'"([\w+_\./\\\'\’\`\s\-]*)"'
 
     mention: Mention = None
     action: MentionAction = None
@@ -103,7 +103,7 @@ class MentionParser:
             raise RuntimeError("Load the mention successfully before trying to parse it")
 
         # Before anything, remove the HTML stuff
-        content = bs4(self.mention.content, features="html.parser").get_text()
+        content = BeautifulSoup(self.mention.content, features="html.parser").get_text()
 
         # Removing the self username from the mention, so we have a clean string to parse
         username_position, content = self.remove_self_username_from_content(content=content)
@@ -126,6 +126,11 @@ class MentionParser:
 
         # We work by words, so split the mentionby spaces:
         words = content.split()
+
+        # If the mention was empty, behave polite like an organinc mention.
+        if len(words) == 0:
+            self.error = self.ERROR_NO_COMMAND
+            return False
 
         # First word must be the verb/action, from the valid ones
         self.action = MentionAction.valid_or_none(words.pop(0))
@@ -309,7 +314,10 @@ class MentionParser:
 
     def _format_answer(self, text: str) -> str:
 
-        return f"@{self.mention.username} {text}"
+        # It's a mess: sometimes with, sometimes without...
+        username = self.mention.username.lstrip("@")
+
+        return f"@{username} {text}"
 
     def parse_complements(self, words: list, quoted_text: str = None) -> bool:
 
@@ -377,6 +385,10 @@ class MentionParser:
             if not self._feeds_storage.key_exists(first_word):
                 self.error = self.ERROR_NOT_FOUND_ALIAS
                 return False
+            # We check again if we still have words
+            if len(words) == 0:
+                self.error = self.ERROR_MISSING_PARAMS
+                return False
             # Second needs to be a valid URL
             second_word = words.pop(0)
             if not Url.is_valid(second_word):
@@ -384,7 +396,7 @@ class MentionParser:
                 return False
             # It could be already a RSS URL
             if Url.is_a_valid_feed(first_word):
-                rss_url = first_word
+                rss_url = second_word
             else:
                 # ... and contain a RSS
                 list_of_possible_rss_urls = Url.findfeeds(second_word)
@@ -450,7 +462,9 @@ class MentionParser:
         return alias == slugify(alias)
 
     def small_user(self, username) -> str:
-        return f"@{username.split('@')[1]}"
+        # Generalising having the username with or without the @ in front
+        username = username.lstrip("@")
+        return f"@{username.split('@')[0]}"
 
     def user_can_write(self) -> str:
         return self._restrict_writes and (
@@ -466,37 +480,40 @@ class MentionParser:
 
             return m.group(1)
 
-    def remove_self_username_from_content(self, content: str):
+    def remove_self_username_from_content(self, content: str) -> tuple:
         """
         Removes the self username from the content.
+
+        It returns a tuple where:
+        - index 0 is the position where the username was found
+        - index 1 is the content once cleaned
         """
 
         # This is a mention. There has to be ALWAYS the self username anywhere in the content.
         #   The username is expressed as short @feeder or long @feeder@social.arnaus.net.
         #   Let's start with the long one, as it's the one we have without calculations.
 
-        username_position = content.find(self.me)
+        # First we try to find the long username
+        username = self.me
+        username_position = content.find(username)
+        if username_position < 0:
+            # Not found, then we try the short username
+            username = self.small_user(self.me)
+            username_position = content.find(username)
+            if username_position < 0:
+                # Not found either, which is strange as it is a mention!
+                #   then return as is.
+                return -1, content
 
-        # We get a non -1 integer, meaning that the username is there
-        if username_position >= 0:
-            # Remove the username from the content
-            content = content.replace(self.me, "")
-            # Now return the position it was found
-            return username_position, content
+        # Now just remove the found username
+        content = content.replace(username, "")
 
-        # Still here? Let's try now with the small version of the username
-        small_me = self.small_user(self.me)
-        username_position = content.find(small_me)
+        # Apply some string cleanings,
+        #   as removing may have left unwanted spaces
+        content = content.replace("  ", " ").lstrip()
 
-        # We get a non -1 integer, meaning that the username is there
-        if username_position >= 0:
-            # Remove the username from the content
-            content = content.replace(small_me, "")
-            # Now return the position it was found
-            return username_position, content
-
-        # Cannot be that you're already here! Then return something unexpected
-        return -1, content
+        # Return position and cleaned content
+        return username_position, content.replace("  ", " ").lstrip()
 
 
 class MentionAction:
