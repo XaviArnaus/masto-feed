@@ -609,6 +609,41 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             ["https://xavier.arnaus.net/blog.rss", "https://xavier.arnaus.net/blog.atom"],
             "@xavi@social.arnaus.net"  # Who is actually mentioning
         ),
+        # Action REMOVE, missing parameters
+        (
+            "@feeder remove",
+            MentionAction.REMOVE,  # remove
+            {},  # No complements
+            MentionParser.ERROR_MISSING_PARAMS,
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action REMOVE, the key does not exist
+        (
+            "@feeder remove xavi",
+            MentionAction.REMOVE,  # remove
+            {},  # No complements
+            MentionParser.ERROR_NOT_FOUND_ALIAS,
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action REMOVE, we have an alias
+        (
+            "@feeder remove existing-key",
+            MentionAction.REMOVE,  # remove
+            {
+                "alias": "existing-key"
+            },
+            None,
+            True,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
     ],
 )
 def test_parse(
