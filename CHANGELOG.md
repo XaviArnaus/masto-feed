@@ -15,3 +15,4 @@
 ### Fixed
 
 - Fix sources not found when setting seen URLs ([#6](https://github.com/XaviArnaus/masto-feed/pull/6))
+- Server TimeOut makes the Listener to crash ([#7](https://github.com/XaviArnaus/masto-feed/pull/7))

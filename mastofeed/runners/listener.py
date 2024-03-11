@@ -7,6 +7,7 @@ from mastofeed.lib.mentions_listener import MentionsListener
 from mastofeed.runners.runner_protocol import RunnerProtocol
 from definitions import ROOT_DIR
 import logging
+from mastodon.Mastodon import MastodonReadTimeout
 
 
 class Listener(RunnerProtocol):
@@ -32,16 +33,18 @@ class Listener(RunnerProtocol):
             # Set the listener for the Streaming for User stuff
             mastodon_instance.stream_user(mention_listener)
 
-        except Exception as e:
-            if self._config.get("janitor.active", False):
-                remote_url = self._config.get("janitor.remote_url")
-                if remote_url is not None and not self._config.get("publisher.dry_run"):
-                    app_name = self._config.get("app.name")
-                    Janitor(remote_url).error(
-                        message="```\n" + full_stack() + "\n```",
-                        summary=f"MastoFeed Listener [{app_name}] failed: {e}"
-                    )
+        except MastodonReadTimeout as e:
+            # Yeah, the servers may give a Timeout from time to time.
+            #   How important is that?
+            self._notify_through_janitor(e)
+            # Log the error in a smaller way
+            self._logger.error(f"Server Timeout: {e}")
+            # Let's try an infinite loop
+            self.run()
 
+        except Exception as e:
+            self._notify_through_janitor(e)
+            # Log the exception
             self._logger.exception(e)
             # Let's try an infinite loop
             self.run()
@@ -54,6 +57,18 @@ class Listener(RunnerProtocol):
             logger=self._logger,
             base_path=ROOT_DIR
         )
+
+    def _notify_through_janitor(self, e):
+        is_janitor_active = self._config.get("janitor.active", False)
+        is_dry_run = self._config.get("publisher.dry_run", True)
+        remote_url = self._config.get("janitor.remote_url", None)
+
+        if is_janitor_active and not is_dry_run and remote_url is not None:
+            app_name = self._config.get("app.name")
+            Janitor(remote_url).error(
+                message="```\n" + full_stack() + "\n```",
+                summary=f"MastoFeed Listener [{app_name}] failed: {e}"
+            )
 
 
 if __name__ == '__main__':

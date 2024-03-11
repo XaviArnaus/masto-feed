@@ -145,16 +145,20 @@ class Main(RunnerProtocol):
                 self._publisher.publish_all_from_queue()
 
         except Exception as e:
-            if self._config.get("janitor.active", False):
-                remote_url = self._config.get("janitor.remote_url")
-                if remote_url is not None and not self._config.get("publisher.dry_run"):
-                    app_name = self._config.get("app.name")
-                    Janitor(remote_url).error(
-                        message="```\n" + full_stack() + "\n```",
-                        summary=f"MastoFeed Main [{app_name}] failed: {e}"
-                    )
-
+            self._notify_through_janitor(e)
             self._logger.exception(e)
+
+    def _notify_through_janitor(self, e):
+        is_janitor_active = self._config.get("janitor.active", False)
+        is_dry_run = self._config.get("publisher.dry_run", True)
+        remote_url = self._config.get("janitor.remote_url", None)
+
+        if is_janitor_active and not is_dry_run and remote_url is not None:
+            app_name = self._config.get("app.name")
+            Janitor(remote_url).error(
+                message="```\n" + full_stack() + "\n```",
+                summary=f"MastoFeed Main [{app_name}] failed: {e}"
+            )
 
     def load_active_parsers(self) -> dict:
         """Get the list of parsers that are active"""
