@@ -445,6 +445,109 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             [],  # No Feeds found
             "@xavi@social.arnaus.net"  # Who is actually mentioning
         ),
+        # Action UPDATE, missing parameters
+        (
+            "@feeder update",
+            MentionAction.UPDATE,  # update
+            {},  # No complements
+            MentionParser.ERROR_MISSING_PARAMS,
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action UPDATE, the key does not exist
+        (
+            "@feeder update xavi",
+            MentionAction.UPDATE,  # update
+            {},  # No complements
+            MentionParser.ERROR_NOT_FOUND_ALIAS,
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action UPDATE, we have an alias but not what to update
+        (
+            "@feeder update existing-key",
+            MentionAction.UPDATE,  # update
+            {},  # No complements
+            MentionParser.ERROR_MISSING_PARAMS,
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action UPDATE, the site URL is invalid. The schema is mandatory
+        (
+            "@feeder update existing-key xavi.com",
+            MentionAction.UPDATE,  # update
+            {},  # No complements
+            MentionParser.ERROR_INVALID_URL,
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action UPDATE, the site URL is invalid. Random 1
+        (
+            "@feeder update existing-key http://xavi,com",
+            MentionAction.UPDATE,  # update
+            {},  # No complements
+            MentionParser.ERROR_INVALID_URL,
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action UPDATE, the site URL is also the feed URL
+        (
+            "@feeder update existing-key https://xavier.arnaus.net/blog.rss",
+            MentionAction.UPDATE,  # update
+            {
+                "alias": "existing-key",
+                "site_url": "https://xavier.arnaus.net/blog.rss",
+                "feed_url": "https://xavier.arnaus.net/blog.rss",
+                "name": None
+            },
+            None,
+            True,  # return for parse()
+            True,  # The site_url is a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action UPDATE, the feed URL is discovered, taking the first item
+        (
+            "@feeder update existing-key https://xavier.arnaus.net/blog",
+            MentionAction.UPDATE,  # update
+            {
+                "alias": "existing-key",
+                "site_url": "https://xavier.arnaus.net/blog",
+                "feed_url": "https://xavier.arnaus.net/blog.rss",
+                "name": None
+            },
+            None,
+            True,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            ["https://xavier.arnaus.net/blog.rss", "https://xavier.arnaus.net/blog.atom"],
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action UPDATE, the site URL is also the feed URL. Defining name.
+        (
+            "@feeder update existing-key https://xavier.arnaus.net/blog.rss \"Xavi's blog\"",
+            MentionAction.UPDATE,  # update
+            {
+                "alias": "existing-key",
+                "site_url": "https://xavier.arnaus.net/blog.rss",
+                "feed_url": "https://xavier.arnaus.net/blog.rss",
+                "name": "Xavi's blog"
+            },
+            None,
+            True,  # return for parse()
+            True,  # The site_url is a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
     ],
 )
 def test_parse(

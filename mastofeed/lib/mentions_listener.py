@@ -382,6 +382,10 @@ class MentionParser:
             if not self._feeds_storage.key_exists(first_word):
                 self.error = self.ERROR_NOT_FOUND_ALIAS
                 return False
+            # We check again if we still have words
+            if len(words) == 0:
+                self.error = self.ERROR_MISSING_PARAMS
+                return False
             # Second needs to be a valid URL
             second_word = words.pop(0)
             if not Url.is_valid(second_word):
@@ -389,7 +393,7 @@ class MentionParser:
                 return False
             # It could be already a RSS URL
             if Url.is_a_valid_feed(first_word):
-                rss_url = first_word
+                rss_url = second_word
             else:
                 # ... and contain a RSS
                 list_of_possible_rss_urls = Url.findfeeds(second_word)
