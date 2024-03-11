@@ -548,6 +548,67 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             [],  # No Feeds found
             "@xavi@social.arnaus.net"  # Who is actually mentioning
         ),
+        # Action TEST, missing parameters
+        (
+            "@feeder test",
+            MentionAction.TEST,  # test
+            {},  # No complements
+            MentionParser.ERROR_MISSING_PARAMS,
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action TEST, the site URL is invalid. The schema is mandatory
+        (
+            "@feeder test xavi.com",
+            MentionAction.TEST,  # test
+            {},  # No complements
+            MentionParser.ERROR_INVALID_URL,
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action TEST, the site URL is invalid. Random 1
+        (
+            "@feeder test http://xavi,com",
+            MentionAction.TEST,  # test
+            {},  # No complements
+            MentionParser.ERROR_INVALID_URL,
+            False,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action TEST, the site URL is also the feed URL
+        (
+            "@feeder test https://xavier.arnaus.net/blog.rss",
+            MentionAction.TEST,  # test
+            {
+                "site_url": "https://xavier.arnaus.net/blog.rss",
+                "feed_url": "https://xavier.arnaus.net/blog.rss"
+            },
+            None,
+            True,  # return for parse()
+            True,  # The site_url is a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Action TEST, the feed URL is discovered, taking the first item
+        (
+            "@feeder test https://xavier.arnaus.net/blog",
+            MentionAction.TEST,  # test
+            {
+                "site_url": "https://xavier.arnaus.net/blog",
+                "feed_url": "https://xavier.arnaus.net/blog.rss"
+            },
+            None,
+            True,  # return for parse()
+            False,  # The site_url is not a valid feed itself
+            ["https://xavier.arnaus.net/blog.rss", "https://xavier.arnaus.net/blog.atom"],
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
     ],
 )
 def test_parse(
