@@ -314,7 +314,10 @@ class MentionParser:
 
     def _format_answer(self, text: str) -> str:
 
-        return f"@{self.mention.username} {text}"
+        # It's a mess: sometimes with, sometimes without...
+        username = self.mention.username.lstrip("@")
+
+        return f"@{username} {text}"
 
     def parse_complements(self, words: list, quoted_text: str = None) -> bool:
 

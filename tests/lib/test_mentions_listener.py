@@ -19,7 +19,7 @@ CONFIG = {
     },
     "app": {
         "user": "@feeder@social.arnaus.net",
-        "admin": "@xavi@social.arnaus.net",
+        "admin": "xavi@social.arnaus.net",
         "restrict_writes": True
     }
 }
@@ -110,7 +110,7 @@ def test_is_alias_valid(alias, expected_result):
 @pytest.mark.parametrize(
     argnames=('username', 'expected_small'),
     argvalues=[
-        ("@xavi@social.arnaus.net", "@xavi"), ("xavi@social.arnaus.net", "@xavi"),
+        ("xavi@social.arnaus.net", "@xavi"), ("xavi@social.arnaus.net", "@xavi"),
         ("@xavi", "@xavi"), ("xavi", "@xavi")
     ],
 )
@@ -209,7 +209,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             False,  # The site_url is not a valid feed itself
             ["https://xavier.arnaus.net/blog.rss", "https://xavier.arnaus.net/blog.atom"],
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Content comes with HTML, even invalid, once cleaned has an action
         (
@@ -220,7 +220,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Content comes with HTML, once cleaned does not have an action
         (
@@ -231,7 +231,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # It's an organic mention, does not mean an action
         (
@@ -242,7 +242,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # The mention does not come with any other word
         (
@@ -253,7 +253,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # The first word after the non-organic mention is not an action
         (
@@ -264,7 +264,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action HELLO, nice and clean
         (
@@ -275,7 +275,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action HELLO, whatever comes after the action is ignored
         (
@@ -286,7 +286,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action LIST, nice and clean
         (
@@ -297,7 +297,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action LIST, whatever comes after the action is ignored
         (
@@ -308,7 +308,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action ADD, missing parameters
         (
@@ -319,7 +319,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action ADD, the site URL is invalid. The schema is mandatory
         (
@@ -330,7 +330,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action ADD, the site URL is invalid. Random 1
         (
@@ -341,7 +341,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action ADD, the site URL is also the feed URL
         (
@@ -357,7 +357,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             True,  # The site_url is a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action ADD, the feed URL is discovered, taking the first item
         (
@@ -373,7 +373,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             False,  # The site_url is not a valid feed itself
             ["https://xavier.arnaus.net/blog.rss", "https://xavier.arnaus.net/blog.atom"],
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action ADD, the site URL is also the feed URL. Defining alias.
         (
@@ -389,7 +389,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             True,  # The site_url is a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action ADD, the site URL is also the feed URL. Defining invalid alias.
         (
@@ -400,7 +400,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             True,  # The site_url is a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action ADD, the site URL is also the feed URL. Defining existing alias.
         (
@@ -411,7 +411,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             True,  # The site_url is a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action ADD, the site URL is also the feed URL. Defining name.
         (
@@ -427,7 +427,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             True,  # The site_url is a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action ADD, the site URL is also the feed URL. Defining alias and name.
         (
@@ -443,7 +443,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             True,  # The site_url is a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action UPDATE, missing parameters
         (
@@ -454,7 +454,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action UPDATE, the key does not exist
         (
@@ -465,7 +465,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action UPDATE, we have an alias but not what to update
         (
@@ -476,7 +476,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action UPDATE, the site URL is invalid. The schema is mandatory
         (
@@ -487,7 +487,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action UPDATE, the site URL is invalid. Random 1
         (
@@ -498,7 +498,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action UPDATE, the site URL is also the feed URL
         (
@@ -514,7 +514,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             True,  # The site_url is a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action UPDATE, the feed URL is discovered, taking the first item
         (
@@ -530,7 +530,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             False,  # The site_url is not a valid feed itself
             ["https://xavier.arnaus.net/blog.rss", "https://xavier.arnaus.net/blog.atom"],
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action UPDATE, the site URL is also the feed URL. Defining name.
         (
@@ -546,7 +546,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             True,  # The site_url is a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action TEST, missing parameters
         (
@@ -557,7 +557,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action TEST, the site URL is invalid. The schema is mandatory
         (
@@ -568,7 +568,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action TEST, the site URL is invalid. Random 1
         (
@@ -579,7 +579,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action TEST, the site URL is also the feed URL
         (
@@ -593,7 +593,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             True,  # The site_url is a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action TEST, the feed URL is discovered, taking the first item
         (
@@ -607,7 +607,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             False,  # The site_url is not a valid feed itself
             ["https://xavier.arnaus.net/blog.rss", "https://xavier.arnaus.net/blog.atom"],
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action REMOVE, missing parameters
         (
@@ -618,7 +618,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action REMOVE, the key does not exist
         (
@@ -629,7 +629,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             False,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
         # Action REMOVE, we have an alias
         (
@@ -642,7 +642,7 @@ def test_remove_self_username_from_content(content, expected_position, expected_
             True,  # return for parse()
             False,  # The site_url is not a valid feed itself
             [],  # No Feeds found
-            "@xavi@social.arnaus.net"  # Who is actually mentioning
+            "xavi@social.arnaus.net"  # Who is actually mentioning
         ),
     ],
 )
@@ -684,3 +684,278 @@ def test_parse(
     assert instance.complements == complements
     assert instance.error == error
     assert parsed_result == returned
+
+
+@pytest.mark.parametrize(
+    argnames=(
+        'content',
+        'action',
+        'complements',
+        'error',
+        'returned',
+        'user_can_write',
+        'status',
+        "username",
+        "entry"
+    ),
+    argvalues=[
+        # Action ADD, an example of a correct full normal one
+        (
+            "@feeder add https://xavier.arnaus.net/blog xavi \"Xavi's blog\"",
+            MentionAction.ADD,
+            {
+                "alias": "xavi",
+                "site_url": "https://xavier.arnaus.net/blog",
+                "feed_url": "https://xavier.arnaus.net/blog.rss",
+                "name": "Xavi's blog"
+            },
+            None,  # No error
+            True,  # return for execute()
+            True,  # The user has rights to write
+            f"@xavi@social.arnaus.net {MentionParser.INFO_ADDED}",
+            "xavi@social.arnaus.net",  # Who is actually mentioning
+            {
+                "xavi": {
+                    "site_url": "https://xavier.arnaus.net/blog",
+                    "feed_url": "https://xavier.arnaus.net/blog.rss",
+                    "name": "Xavi's blog"
+                }
+            }
+        ),
+        # Action ADD, the user does not have rights to write
+        (
+            "@feeder add https://xavier.arnaus.net/blog xavi \"Xavi's blog\"",
+            MentionAction.ADD,
+            {
+                "alias": "xavi",
+                "site_url": "https://xavier.arnaus.net/blog",
+                "feed_url": "https://xavier.arnaus.net/blog.rss",
+                "name": "Xavi's blog"
+            },
+            None,  # No error
+            True,  # return for execute()
+            False,  # The user does not rights to write
+            f"@xavi@social.arnaus.net {MentionParser.ERROR_NOT_ALLOWED}",
+            "xavi@social.arnaus.net",  # Who is actually mentioning
+            {
+                "xavi": {
+                    "site_url": "https://xavier.arnaus.net/blog",
+                    "feed_url": "https://xavier.arnaus.net/blog.rss",
+                    "name": "Xavi's blog"
+                }
+            }
+        ),
+        # Action UPDATE, correct and success
+        (
+            "@feeder update xavi https://xavier.arnaus.net/blog \"Xavi's blog\"",
+            MentionAction.UPDATE,
+            {
+                "alias": "xavi",
+                "site_url": "https://xavier.arnaus.net/blog",
+                "feed_url": "https://xavier.arnaus.net/blog.rss",
+                "name": "Xavi's blog"
+            },
+            None,  # No error
+            True,  # return for execute()
+            True,  # The user has rights to write
+            f"@xavi@social.arnaus.net {MentionParser.INFO_UPDATED}",
+            "xavi@social.arnaus.net",  # Who is actually mentioning
+            {
+                "xavi": {
+                    "site_url": "https://xavier.arnaus.net/blog",
+                    "feed_url": "https://xavier.arnaus.net/blog.rss",
+                    "name": "Xavi's blog"
+                }
+            }
+        ),
+        # Action UPDATE, the user does not have rights to write
+        (
+            "@feeder update xavi https://xavier.arnaus.net/blog \"Xavi's blog\"",
+            MentionAction.UPDATE,
+            {
+                "alias": "xavi",
+                "site_url": "https://xavier.arnaus.net/blog",
+                "feed_url": "https://xavier.arnaus.net/blog.rss",
+                "name": "Xavi's blog"
+            },
+            None,  # No error
+            True,  # return for execute()
+            False,  # The user does not rights to write
+            f"@xavi@social.arnaus.net {MentionParser.ERROR_NOT_ALLOWED}",
+            "xavi@social.arnaus.net",  # Who is actually mentioning
+            {
+                "xavi": {
+                    "site_url": "https://xavier.arnaus.net/blog",
+                    "feed_url": "https://xavier.arnaus.net/blog.rss",
+                    "name": "Xavi's blog"
+                }
+            }
+        ),
+        # Action REMOVE, correct and success
+        (
+            "@feeder remove xavi",
+            MentionAction.REMOVE,
+            {
+                "alias": "xavi"
+            },
+            None,  # No error
+            True,  # return for execute()
+            True,  # The user has rights to write
+            f"@xavi@social.arnaus.net {MentionParser.INFO_REMOVED}",
+            "xavi@social.arnaus.net",  # Who is actually mentioning
+            {
+                "xavi": {}
+            }
+        ),
+        # Action UPDATE, the user does not have rights to write
+        (
+            "@feeder remove xavi",
+            MentionAction.REMOVE,
+            {
+                "alias": "xavi"
+            },
+            None,  # No error
+            True,  # return for execute()
+            False,  # The user does not rights to write
+            f"@xavi@social.arnaus.net {MentionParser.ERROR_NOT_ALLOWED}",
+            "xavi@social.arnaus.net",  # Who is actually mentioning
+            {
+                "xavi": {}
+            }
+        ),
+        # HELLO does not have any stack change
+        (
+            "@feeder hello",
+            MentionAction.HELLO,
+            {},
+            None,  # No error
+            True,  # return for execute()
+            True,  # The user has rights to write (does not matter here)
+            f"@xavi@social.arnaus.net {MentionParser.INFO_HELLO}",
+            "xavi@social.arnaus.net",  # Who is actually mentioning
+            {
+                "xavi": {}
+            }
+        ),
+        # LIST does not have any stack change. Check the code for the setting.
+        (
+            "@feeder list",
+            MentionAction.LIST,
+            {},
+            None,  # No error
+            True,  # return for execute()
+            True,  # The user has rights to write (does not matter here)
+            f"@xavi@social.arnaus.net {MentionParser.INFO_LIST_HEADER}" +
+            "[xavi] Old Blog: https://old.url " + "(https://old.url/blog.rss)",
+            "xavi@social.arnaus.net",  # Who is actually mentioning
+            {
+                "xavi": {}
+            }
+        ),
+        # Error for invalid action. Will complain and show also the HELLO
+        (
+            "@feeder unknown",
+            None,
+            {},
+            MentionParser.ERROR_INVALID_ACTION,  # Invalid action
+            True,  # return for execute()
+            True,  # The user has rights to write (does not matter here)
+            f"@xavi@social.arnaus.net {MentionParser.ERROR_INVALID_ACTION}" +
+            f"\n\n{MentionParser.INFO_HELLO}",
+            "xavi@social.arnaus.net",  # Who is actually mentioning
+            {
+                "xavi": {}
+            }
+        ),
+        # Error for anything else. Will complain only
+        (
+            "@feeder unknown",
+            None,
+            {},
+            MentionParser.ERROR_INVALID_RSS,  # Just any error for the test
+            True,  # return for execute()
+            True,  # The user has rights to write (does not matter here)
+            f"@xavi@social.arnaus.net {MentionParser.ERROR_INVALID_RSS}",
+            "xavi@social.arnaus.net",  # Who is actually mentioning
+            {
+                "xavi": {}
+            }
+        ),
+    ],
+)
+def test_execute(
+    content: str,
+    action: str,
+    complements: dict,
+    error: str,
+    returned: bool,
+    user_can_write: bool,
+    status: str,
+    username: str,
+    entry: dict
+):
+    old_entry = {
+        "site_url": "https://old.url",
+        "feed_url": "https://old.url/blog.rss",
+        "name": "Old Blog"
+    }
+
+    # Set up the mentioning environment
+    instance = get_mention_parser()
+    mention = Mention.from_dict(
+        {
+            "status_id": 1234,
+            "content": content,
+            "username": username,
+            "visibility": StatusPostVisibility.PUBLIC
+        }
+    )
+    instance.mention = mention
+    instance.action = action
+    instance.complements = complements
+    instance.error = error
+
+    # For some actions, we should have something already in the stack
+    if action in [MentionAction.UPDATE, MentionAction.REMOVE, MentionAction.LIST]:
+        old_key = list(entry.keys())[0]
+        instance._feeds_storage.set(param_name=old_key, value=old_entry)
+        assert instance._feeds_storage.key_exists(old_key)
+        old_stuff = instance._feeds_storage.get(param_name=old_key)
+        assert old_stuff["site_url"] == "https://old.url"
+        assert old_stuff["feed_url"] == "https://old.url/blog.rss"
+        assert old_stuff["name"] == "Old Blog"
+
+    # Mock the external calls and trigger the parse
+    mocked_storage_write_file = Mock()
+    mocked_listener_user_can_write = Mock()
+    mocked_listener_user_can_write.return_value = user_can_write
+    with patch.object(Storage, "write_file", new=mocked_storage_write_file):
+        with patch.object(instance, "user_can_write", new=mocked_listener_user_can_write):
+            parsed_result = instance.execute()
+
+    # Assert that the parse outcomed what we expect
+    assert instance.answer.status == status
+    assert parsed_result == returned
+    assert instance.answer.visibility == StatusPostVisibility.PUBLIC
+    assert instance.answer.in_reply_to_id == 1234
+
+    # Now assert that the data is correctly applied into the stack
+    key = list(entry.keys())[0]
+    if user_can_write is True:
+        if action == MentionAction.REMOVE:
+            assert instance._feeds_storage.key_exists(key) is False
+        elif action in [MentionAction.ADD, MentionAction.UPDATE]:
+            saved_stuff = instance._feeds_storage.get(param_name=key)
+            assert saved_stuff["site_url"] == entry[key]["site_url"]
+            assert saved_stuff["feed_url"] == entry[key]["feed_url"]
+            assert saved_stuff["name"] == entry[key]["name"]
+    else:
+        if action == MentionAction.REMOVE:
+            assert instance._feeds_storage.key_exists(key) is True
+        elif action == MentionAction.ADD:
+            assert instance._feeds_storage.key_exists(key) is False
+        elif action == MentionAction.UPDATE:
+            saved_stuff = instance._feeds_storage.get(param_name=key)
+            assert saved_stuff["site_url"] == old_entry["site_url"]
+            assert saved_stuff["feed_url"] == old_entry["feed_url"]
+            assert saved_stuff["name"] == old_entry["name"]
