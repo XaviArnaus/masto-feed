@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "MastoFeed"
 version = "0.0.1"
-description = "Bot that reads RSS feeds and publishes the updates. It is controled by interacting with the Mastodon user directly"
+description = "Bot that reads RSS feeds and publishes the updates. It is controled by interacting with the Mastodon user directly via mentions"
 authors = ["Xavier Arnaus <xavi@arnaus.net>"]
 
 [tool.poetry.dependencies]
