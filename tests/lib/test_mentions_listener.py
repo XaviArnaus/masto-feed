@@ -169,11 +169,7 @@ def test_get_text_inside_quotes(content, expected_result):
             "add https://xavier.arnaus.net/blog alias \"Xavi's blog\""
         ),
         ("Ola @feeder k ase", 4, "Ola k ase"),
-        (
-            "@feeder@social.arnaus.net list",
-            0,
-            "list"
-        ),
+        ("@feeder@social.arnaus.net list", 0, "list"),
         ("Ola @feeder@social.arnaus.net k ase", 4, "Ola k ase"),
         ("Ola k ase", -1, "Ola k ase"),
     ],
@@ -186,3 +182,115 @@ def test_remove_self_username_from_content(content, expected_position, expected_
         expected_position, expected_content
     )
 
+
+@pytest.mark.parametrize(
+    argnames=(
+        'content',
+        'action',
+        'complements',
+        'error',
+        'returned',
+        'is_a_valid_feed',
+        'findfeeds',
+        "username"
+    ),
+    argvalues=[
+        # An example of a correct full normal one
+        (
+            "@feeder add https://xavier.arnaus.net/blog xavi \"Xavi's blog\"",
+            MentionAction.ADD,
+            {
+                "alias": "xavi",
+                "site_url": "https://xavier.arnaus.net/blog",
+                "feed_url": "https://xavier.arnaus.net/blog.rss",
+                "name": "Xavi's blog"
+            },
+            None,  # No error
+            True,  # Parse returns true
+            False,  # The site_url is not a valid feed itself
+            ["https://xavier.arnaus.net/blog.rss", "https://xavier.arnaus.net/blog.atom"],
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Content comes with HTML, even invalid, once cleaned has an action
+        (
+            "<p><small>@feeder</small> <strong>list</strong>",
+            MentionAction.LIST,
+            {},  # No complements
+            None,  # No error
+            True,  # Parse returns true
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # Content comes with HTML, once cleaned does not have an action
+        (
+            "<p><small>@feeder</small> <strong>unknown</strong>",
+            None,  # No action
+            {},  # No complements
+            MentionParser.ERROR_INVALID_ACTION,  # No action error
+            False,  # Parse returns false
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # It's an organic mention, does not mean an action
+        (
+            "I am working in my @feeder project",
+            None,  # No action
+            {},  # No complements
+            MentionParser.ERROR_NO_COMMAND,  # No command error
+            False,  # Parse returns false
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+        # The mention does not come with any other word
+        (
+            "@feeder",
+            None,  # No action
+            {},  # No complements
+            MentionParser.ERROR_NO_COMMAND,  # No command error
+            False,  # Parse returns false
+            False,  # The site_url is not a valid feed itself
+            [],  # No Feeds found
+            "@xavi@social.arnaus.net"  # Who is actually mentioning
+        ),
+    ],
+)
+def test_parse(
+    content: str,
+    action: str,
+    complements: dict,
+    error: str,
+    returned: bool,
+    is_a_valid_feed: bool,
+    findfeeds: list,
+    username: str
+):
+
+    # Set up the mentioning environment
+    instance = get_mention_parser()
+    mention = Mention.from_dict(
+        {
+            "status_id": 1234,
+            "content": content,
+            "username": username,
+            "visibility": StatusPostVisibility.PUBLIC
+        }
+    )
+    instance.mention = mention
+
+    # Mock the external calls and trigger the parse
+    mocked_url_findfeeds = Mock()
+    mocked_url_findfeeds.return_value = findfeeds
+    mocked_url_is_a_valid_feed = Mock()
+    mocked_url_is_a_valid_feed.return_value = is_a_valid_feed
+    with patch.object(Url, "findfeeds", new=mocked_url_findfeeds):
+        with patch.object(Url, "is_a_valid_feed", new=mocked_url_is_a_valid_feed):
+            parsed_result = instance.parse()
+
+    # Assert that the parse outcomed what we expect
+    assert instance.action == action
+    assert instance.complements == complements
+    assert instance.error == error
+    assert parsed_result == returned

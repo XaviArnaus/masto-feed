@@ -8,7 +8,7 @@ from pyxavi.url import Url
 from mastofeed.lib.publisher import Publisher
 from definitions import ROOT_DIR
 from slugify import slugify
-from bs4 import BeautifulSoup as bs4
+from bs4 import BeautifulSoup
 import re
 
 
@@ -103,7 +103,7 @@ class MentionParser:
             raise RuntimeError("Load the mention successfully before trying to parse it")
 
         # Before anything, remove the HTML stuff
-        content = bs4(self.mention.content, features="html.parser").get_text()
+        content = BeautifulSoup(self.mention.content, features="html.parser").get_text()
 
         # Removing the self username from the mention, so we have a clean string to parse
         username_position, content = self.remove_self_username_from_content(content=content)
@@ -126,6 +126,11 @@ class MentionParser:
 
         # We work by words, so split the mentionby spaces:
         words = content.split()
+
+        # If the mention was empty, behave polite like an organinc mention.
+        if len(words) == 0:
+            self.error = self.ERROR_NO_COMMAND
+            return False
 
         # First word must be the verb/action, from the valid ones
         self.action = MentionAction.valid_or_none(words.pop(0))
