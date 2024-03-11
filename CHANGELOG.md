@@ -10,6 +10,7 @@
 - Make Log rotation as default ([#5](https://github.com/XaviArnaus/masto-feed/pull/5))
 - Avoid answering with ERROR_INVALID_ACTION if it's organic mention ([#8](https://github.com/XaviArnaus/masto-feed/pull/8))
 - Tests for mentions listener ([#9](https://github.com/XaviArnaus/masto-feed/pull/9))
+- Release `v0.0.1` ([#10](https://github.com/XaviArnaus/masto-feed/pull/10))
 
 ### Fixed
 
