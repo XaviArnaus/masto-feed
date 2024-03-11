@@ -4,7 +4,7 @@ from pyxavi.queue_stack import Queue
 from pyxavi.url import Url
 from mastofeed.lib.publisher import Publisher
 from mastofeed.lib.mentions_listener import MentionParser, Mention, MentionAction
-from pyxavi.mastodon_helper import StatusPostVisibility
+from pyxavi.mastodon_helper import StatusPostVisibility, StatusPost
 from logging import Logger as BuiltInLogger
 from unittest.mock import patch, Mock
 import copy
@@ -959,3 +959,17 @@ def test_execute(
             assert saved_stuff["site_url"] == old_entry["site_url"]
             assert saved_stuff["feed_url"] == old_entry["feed_url"]
             assert saved_stuff["name"] == old_entry["name"]
+
+
+def test_answer_back():
+
+    # Set up the mentioning environment
+    instance = get_mention_parser()
+    answer = StatusPost.from_dict({"status": "I am the answer"})
+    instance.answer = answer
+
+    mocked_publisher_publish = Mock()
+    with patch.object(instance._publisher, "publish_status_post", new=mocked_publisher_publish):
+        instance.answer_back()
+
+    mocked_publisher_publish.assert_called_once_with(status_post=answer)
