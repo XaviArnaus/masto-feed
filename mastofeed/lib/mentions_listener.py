@@ -468,37 +468,40 @@ class MentionParser:
 
             return m.group(1)
 
-    def remove_self_username_from_content(self, content: str):
+    def remove_self_username_from_content(self, content: str) -> tuple:
         """
         Removes the self username from the content.
+
+        It returns a tuple where:
+        - index 0 is the position where the username was found
+        - index 1 is the content once cleaned
         """
 
         # This is a mention. There has to be ALWAYS the self username anywhere in the content.
         #   The username is expressed as short @feeder or long @feeder@social.arnaus.net.
         #   Let's start with the long one, as it's the one we have without calculations.
 
-        username_position = content.find(self.me)
+        # First we try to find the long username
+        username = self.me
+        username_position = content.find(username)
+        if username_position < 0:
+            # Not found, then we try the short username
+            username = self.small_user(self.me)
+            username_position = content.find(username)
+            if username_position < 0:
+                # Not found either, which is strange as it is a mention!
+                #   then return as is.
+                return -1, content
 
-        # We get a non -1 integer, meaning that the username is there
-        if username_position >= 0:
-            # Remove the username from the content
-            content = content.replace(self.me, "")
-            # Now return the position it was found
-            return username_position, content
+        # Now just remove the found username
+        content = content.replace(username, "")
 
-        # Still here? Let's try now with the small version of the username
-        small_me = self.small_user(self.me)
-        username_position = content.find(small_me)
+        # Apply some string cleanings,
+        #   as removing may have left unwanted spaces
+        content = content.replace("  ", " ").lstrip()
 
-        # We get a non -1 integer, meaning that the username is there
-        if username_position >= 0:
-            # Remove the username from the content
-            content = content.replace(small_me, "")
-            # Now return the position it was found
-            return username_position, content
-
-        # Cannot be that you're already here! Then return something unexpected
-        return -1, content
+        # Return position and cleaned content
+        return username_position, content.replace("  ", " ").lstrip()
 
 
 class MentionAction:

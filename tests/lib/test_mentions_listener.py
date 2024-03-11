@@ -157,3 +157,24 @@ def test_get_text_inside_quotes(content, expected_result):
     instance = get_mention_parser()
 
     assert instance.get_text_inside_quotes(f"@feeder {content}") == expected_result
+
+
+@pytest.mark.parametrize(
+    argnames=('content', 'expected_position', 'expected_content'),
+    argvalues=[
+        (
+            "@feeder add https://xavier.arnaus.net/blog alias \"Xavi's blog\"",
+            0,
+            "add https://xavier.arnaus.net/blog alias \"Xavi's blog\""
+        ),
+        ("Ola @feeder k ase", 4, "Ola k ase"),
+        ("Ola k ase", -1, "Ola k ase"),
+    ],
+)
+def test_remove_self_username_from_content(content, expected_position, expected_content):
+
+    instance = get_mention_parser()
+
+    assert instance.remove_self_username_from_content(content) == (
+        expected_position, expected_content
+    )
