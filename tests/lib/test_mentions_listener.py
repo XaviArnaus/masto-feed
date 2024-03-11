@@ -1,11 +1,12 @@
 from pyxavi.config import Config
 from pyxavi.storage import Storage
 from pyxavi.queue_stack import Queue
+from pyxavi.url import Url
 from mastofeed.lib.publisher import Publisher
-from mastofeed.lib.mentions_listener import MentionParser, Mention
+from mastofeed.lib.mentions_listener import MentionParser, Mention, MentionAction
 from pyxavi.mastodon_helper import StatusPostVisibility
 from logging import Logger as BuiltInLogger
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import copy
 import pytest
 
@@ -168,6 +169,12 @@ def test_get_text_inside_quotes(content, expected_result):
             "add https://xavier.arnaus.net/blog alias \"Xavi's blog\""
         ),
         ("Ola @feeder k ase", 4, "Ola k ase"),
+        (
+            "@feeder@social.arnaus.net list",
+            0,
+            "list"
+        ),
+        ("Ola @feeder@social.arnaus.net k ase", 4, "Ola k ase"),
         ("Ola k ase", -1, "Ola k ase"),
     ],
 )
@@ -178,3 +185,4 @@ def test_remove_self_username_from_content(content, expected_position, expected_
     assert instance.remove_self_username_from_content(content) == (
         expected_position, expected_content
     )
+
